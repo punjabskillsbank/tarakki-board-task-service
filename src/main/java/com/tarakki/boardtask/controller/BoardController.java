@@ -1,0 +1,24 @@
+package com.tarakki.boardtask.controller;
+
+import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.service.BoardService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/boards")
+@RequiredArgsConstructor
+public class BoardController {
+
+    private final BoardService boardService;
+
+    @PostMapping
+    public ResponseEntity<BoardDTO> createBoard(@Valid @RequestBody BoardDTO boardDTO) {
+
+        BoardDTO result = boardService.createBoard(boardDTO);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+}

@@ -53,4 +53,48 @@ class BoardControllerTest {
                 .andExpect(jsonPath("$.boardName").value(input.getBoardName()))
                 .andExpect(jsonPath("$.boardDesc").value(input.getBoardDesc()));
     }
+
+    @Test
+    void shouldReturnBadRequestWhenBoardNameIsMissing() throws Exception {
+
+        input.setBoardName(null);
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenBoardDescIsMissing() throws Exception {
+
+        input.setBoardDesc(null);
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenOrgIdIsMissing() throws Exception {
+
+        input.setOrgId(null);
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
+
+        input.setCreatedBy(null);
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isBadRequest());
+    }
 }

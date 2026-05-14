@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class BoardServiceImpl implements BoardService {
@@ -22,5 +25,14 @@ public class BoardServiceImpl implements BoardService {
         Board savedBoard = boardRepository.save(board);
 
         return modelMapper.map(savedBoard, BoardDTO.class);
+    }
+
+    @Override
+    public List<BoardDTO> getBoardsByOrganization(Long orgId) {
+
+        List<Board> boards = boardRepository.findByOrgId(orgId);
+        return boards.stream()
+                .map(board -> modelMapper.map(board, BoardDTO.class))
+                .collect(Collectors.toList());
     }
 }

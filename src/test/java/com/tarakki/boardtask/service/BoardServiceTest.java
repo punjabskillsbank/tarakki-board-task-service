@@ -2,6 +2,7 @@ package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.common.entity.Board;
+import com.tarakki.common.exceptionHandling.BoardNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
@@ -61,5 +62,33 @@ class BoardServiceTest {
         verify(modelMapper).map(any(BoardDTO.class), eq(Board.class));
         verify(boardRepository).save(any(Board.class));
         verify(modelMapper).map(any(Board.class), eq(BoardDTO.class));
+    }
+
+    @Test
+    void shouldDeleteBoard() {
+
+        when(boardRepository.existsById(1L))
+                .thenReturn(true);
+
+        boardService.deleteBoard(1L);
+
+        verify(boardRepository).existsById(1L);
+        verify(boardRepository).deleteById(1L);
+    }
+
+    @Test
+    void shouldThrowWhenDeletingMissingBoard() {
+
+        when(boardRepository.existsById(99L))
+                .thenReturn(false);
+
+        BoardNotFoundException exception = assertThrows(
+                BoardNotFoundException.class,
+                () -> boardService.deleteBoard(99L)
+        );
+
+        assertEquals("Board not found with id: 99", exception.getMessage());
+        verify(boardRepository).existsById(99L);
+        verify(boardRepository, never()).deleteById(anyLong());
     }
 }

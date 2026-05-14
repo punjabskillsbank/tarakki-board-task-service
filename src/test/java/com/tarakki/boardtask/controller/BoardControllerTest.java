@@ -3,6 +3,7 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
+import com.tarakki.common.exceptionHandling.BoardNotFoundException;
 import  org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,8 @@ import tools.jackson.databind.ObjectMapper;
 
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -96,5 +98,26 @@ class BoardControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldDeleteBoard() throws Exception {
+
+        mockMvc.perform(delete("/api/boards/{boardId}", 1L))
+                .andExpect(status().isNoContent());
+
+        verify(boardService).deleteBoard(1L);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardDoesNotExist() throws Exception {
+
+        doThrow(new BoardNotFoundException(99L))
+                .when(boardService)
+                .deleteBoard(99L);
+
+        mockMvc.perform(delete("/api/boards/{boardId}", 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Board not found with id: 99"));
     }
 }

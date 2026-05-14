@@ -5,4 +5,6 @@ import com.tarakki.boardtask.dto.BoardDTO;
 public interface BoardService {
 
     BoardDTO createBoard(BoardDTO boardDTO);
+
+    void deleteBoard(Long boardId);
 }

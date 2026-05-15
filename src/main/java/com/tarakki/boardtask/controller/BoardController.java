@@ -2,7 +2,6 @@ package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.service.BoardService;
-import com.tarakki.common.exceptionHandling.BoardNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,11 +25,6 @@ public class BoardController {
     @DeleteMapping("/{boardId}")
     public ResponseEntity<Void> deleteBoard(@PathVariable Long boardId) {
         boardService.deleteBoard(boardId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(BoardNotFoundException.class)
-    public ResponseEntity<String> handleBoardNotFound(BoardNotFoundException exception) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

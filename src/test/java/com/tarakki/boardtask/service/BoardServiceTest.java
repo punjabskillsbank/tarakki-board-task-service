@@ -2,7 +2,7 @@ package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.common.entity.Board;
-import com.tarakki.common.exceptionHandling.BoardNotFoundException;
+import com.tarakki.common.exceptionHandling.BoardIdNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
@@ -32,11 +32,15 @@ class BoardServiceTest {
 
     private BoardDTO dto;
     private Board board;
+    private Long existingBoardId;
+    private Long missingBoardId;
 
     @BeforeEach
     void setUp() {
         dto = BoardTestDataFactory.createBoardDTO();
         board = BoardTestDataFactory.createBoardEntity();
+        existingBoardId = BoardTestDataFactory.createExistingBoardId();
+        missingBoardId = BoardTestDataFactory.createMissingBoardId();
     }
 
     @Test
@@ -67,28 +71,28 @@ class BoardServiceTest {
     @Test
     void shouldDeleteBoard() {
 
-        when(boardRepository.existsById(1L))
+        when(boardRepository.existsById(existingBoardId))
                 .thenReturn(true);
 
-        boardService.deleteBoard(1L);
+        boardService.deleteBoard(existingBoardId);
 
-        verify(boardRepository).existsById(1L);
-        verify(boardRepository).deleteById(1L);
+        verify(boardRepository).existsById(existingBoardId);
+        verify(boardRepository).deleteById(existingBoardId);
     }
 
     @Test
     void shouldThrowWhenDeletingMissingBoard() {
 
-        when(boardRepository.existsById(99L))
+        when(boardRepository.existsById(missingBoardId))
                 .thenReturn(false);
 
-        BoardNotFoundException exception = assertThrows(
-                BoardNotFoundException.class,
-                () -> boardService.deleteBoard(99L)
+        BoardIdNotFoundException exception = assertThrows(
+                BoardIdNotFoundException.class,
+                () -> boardService.deleteBoard(missingBoardId)
         );
 
-        assertEquals("Board not found with id: 99", exception.getMessage());
-        verify(boardRepository).existsById(99L);
+        assertEquals("Board not found with id: " + missingBoardId, exception.getMessage());
+        verify(boardRepository).existsById(missingBoardId);
         verify(boardRepository, never()).deleteById(anyLong());
     }
 }

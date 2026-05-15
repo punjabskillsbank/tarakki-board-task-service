@@ -3,7 +3,7 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
-import com.tarakki.common.exceptionHandling.BoardNotFoundException;
+import com.tarakki.common.exceptionHandling.BoardIdNotFoundException;
 import  org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
@@ -20,6 +20,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
+import static com.tarakki.boardtask.util.BoardTestDataFactory.MISSING_BOARD_ID;
 
 @WebMvcTest(BoardController.class)
 class BoardControllerTest {
@@ -103,21 +105,21 @@ class BoardControllerTest {
     @Test
     void shouldDeleteBoard() throws Exception {
 
-        mockMvc.perform(delete("/api/boards/{boardId}", 1L))
+        mockMvc.perform(delete("/api/boards/{boardId}", EXISTING_BOARD_ID))
                 .andExpect(status().isNoContent());
 
-        verify(boardService).deleteBoard(1L);
+        verify(boardService).deleteBoard(EXISTING_BOARD_ID);
     }
 
     @Test
     void shouldReturnNotFoundWhenBoardDoesNotExist() throws Exception {
 
-        doThrow(new BoardNotFoundException(99L))
+        doThrow(new BoardIdNotFoundException(MISSING_BOARD_ID))
                 .when(boardService)
-                .deleteBoard(99L);
+                .deleteBoard(MISSING_BOARD_ID);
 
-        mockMvc.perform(delete("/api/boards/{boardId}", 99L))
+        mockMvc.perform(delete("/api/boards/{boardId}", MISSING_BOARD_ID))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Board not found with id: 99"));
+                .andExpect(content().string("Board not found with id: " + MISSING_BOARD_ID));
     }
 }

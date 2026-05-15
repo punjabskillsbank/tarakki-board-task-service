@@ -2,7 +2,7 @@ package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.common.entity.Board;
-import com.tarakki.common.exceptionHandling.BoardNotFoundException;
+import com.tarakki.common.exceptionHandling.BoardIdNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.service.BoardService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public void deleteBoard(Long boardId) {
         if (!boardRepository.existsById(boardId)) {
-            throw new BoardNotFoundException(boardId);
+            throw new BoardIdNotFoundException(boardId);
         }
 
         boardRepository.deleteById(boardId);

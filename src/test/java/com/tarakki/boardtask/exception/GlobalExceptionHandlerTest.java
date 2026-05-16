@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class GlobalExceptionHandlerTest {
 
+    private static final Long MISSING_BOARD_ID = 99L;
+
     private GlobalExceptionHandler globalExceptionHandler;
 
     @BeforeEach
@@ -29,14 +31,12 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void shouldHandleBoardIdNotFoundException() {
-        Long missingBoardId = 99L;
-
         ResponseEntity<String> response = globalExceptionHandler.handleBoardIdNotFound(
-                new BoardIdNotFoundException(missingBoardId)
+                new BoardIdNotFoundException(MISSING_BOARD_ID)
         );
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Board not found with id: " + missingBoardId, response.getBody());
+        assertEquals("Board not found with id: " + MISSING_BOARD_ID, response.getBody());
     }
 
     @Test

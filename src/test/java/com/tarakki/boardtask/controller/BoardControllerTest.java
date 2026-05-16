@@ -1,9 +1,10 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.exception.OrganisationNotFoundException;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
-import  org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +14,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BoardController.class)
@@ -96,5 +98,34 @@ class BoardControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldGetBoardsByOrganizationAndReturn200Ok() throws Exception {
+
+        Long orgId = 1L;
+        List<BoardDTO> boards = List.of(output);
+
+        when(boardService.getBoardsByOrganization(orgId))
+                .thenReturn(boards);
+
+        mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].boardName").value(output.getBoardName()))
+                .andExpect(jsonPath("$[0].boardDesc").value(output.getBoardDesc()));
+    }
+
+    @Test
+    void shouldGetBoardsByOrganizationAndReturn404NotFound() throws Exception {
+
+        Long orgId = 999L;
+
+        when(boardService.getBoardsByOrganization(orgId))
+                .thenThrow(new OrganisationNotFoundException(orgId));
+
+        mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 }

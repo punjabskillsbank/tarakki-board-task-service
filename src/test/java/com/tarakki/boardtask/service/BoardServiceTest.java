@@ -1,8 +1,10 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.exception.OrganisationNotFoundException;
 import com.tarakki.common.entity.Board;
 import com.tarakki.boardtask.repository.BoardRepository;
+import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -22,6 +26,9 @@ class BoardServiceTest {
 
     @Mock
     private BoardRepository boardRepository;
+
+    @Mock
+    private OrganizationRepository organizationRepository;
 
     @Mock
     private ModelMapper modelMapper;
@@ -61,5 +68,52 @@ class BoardServiceTest {
         verify(modelMapper).map(any(BoardDTO.class), eq(Board.class));
         verify(boardRepository).save(any(Board.class));
         verify(modelMapper).map(any(Board.class), eq(BoardDTO.class));
+    }
+
+    @Test
+    void shouldGetBoardsByOrganizationSuccessfully() {
+
+        Long orgId = 1L;
+        List<Board> boards = List.of(board);
+
+        when(organizationRepository.existsById(orgId))
+                .thenReturn(true);
+
+        when(boardRepository.findByOrgId(orgId))
+                .thenReturn(boards);
+
+        when(modelMapper.map(any(Board.class), eq(BoardDTO.class)))
+                .thenReturn(dto);
+
+        List<BoardDTO> result = boardService.getBoardsByOrganization(orgId);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(dto.getBoardName(), result.get(0).getBoardName());
+        assertEquals(dto.getBoardDesc(), result.get(0).getBoardDesc());
+
+        verify(organizationRepository).existsById(orgId);
+        verify(boardRepository).findByOrgId(orgId);
+        verify(modelMapper).map(any(Board.class), eq(BoardDTO.class));
+    }
+
+    @Test
+    void shouldThrowOrganisationNotFoundExceptionWhenOrgIdDoesNotExist() {
+
+        Long orgId = 999L;
+
+        when(organizationRepository.existsById(orgId))
+                .thenReturn(false);
+
+        OrganisationNotFoundException exception = assertThrows(
+                OrganisationNotFoundException.class,
+                () -> boardService.getBoardsByOrganization(orgId)
+        );
+
+        assertEquals("Organisation with id " + orgId + " not found", exception.getMessage());
+
+        verify(organizationRepository).existsById(orgId);
+        verify(boardRepository, never()).findByOrgId(anyLong());
+        verify(modelMapper, never()).map(any(Board.class), eq(BoardDTO.class));
     }
 }

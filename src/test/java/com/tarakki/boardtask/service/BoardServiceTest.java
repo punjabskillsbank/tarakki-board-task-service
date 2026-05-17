@@ -1,12 +1,12 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.boardtask.exception.OrganisationNotFoundException;
 import com.tarakki.common.entity.Board;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
+import com.tarakki.common.exceptionHandling.OrganisationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,7 +73,7 @@ class BoardServiceTest {
     @Test
     void shouldGetBoardsByOrganizationSuccessfully() {
 
-        Long orgId = 1L;
+        Long orgId = BoardTestDataFactory.VALID_ORG_ID;
         List<Board> boards = List.of(board);
 
         when(organizationRepository.existsById(orgId))
@@ -100,7 +100,7 @@ class BoardServiceTest {
     @Test
     void shouldThrowOrganisationNotFoundExceptionWhenOrgIdDoesNotExist() {
 
-        Long orgId = 999L;
+        Long orgId = BoardTestDataFactory.INVALID_ORG_ID;
 
         when(organizationRepository.existsById(orgId))
                 .thenReturn(false);

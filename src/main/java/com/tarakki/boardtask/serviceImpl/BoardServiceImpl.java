@@ -1,7 +1,7 @@
 package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.boardtask.exception.OrganisationNotFoundException;
+import com.tarakki.common.exceptionHandling.OrganisationNotFoundException;
 import com.tarakki.common.entity.Board;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;

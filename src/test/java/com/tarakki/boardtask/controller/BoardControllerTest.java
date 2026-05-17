@@ -1,7 +1,6 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.boardtask.exception.OrganisationNotFoundException;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,9 +36,9 @@ class BoardControllerTest {
     private BoardDTO output;
 
     @BeforeEach
-    void setUp() {
-        input = BoardTestDataFactory.createBoardDTO();
-        output = BoardTestDataFactory.createBoardDTO();
+        void setUp() {
+                input = BoardTestDataFactory.createBoardDTO();
+                output = BoardTestDataFactory.createBoardDTO();
     }
 
     @Test
@@ -103,7 +102,7 @@ class BoardControllerTest {
     @Test
     void shouldGetBoardsByOrganizationAndReturn200Ok() throws Exception {
 
-        Long orgId = 1L;
+        Long orgId = BoardTestDataFactory.VALID_ORG_ID;
         List<BoardDTO> boards = List.of(output);
 
         when(boardService.getBoardsByOrganization(orgId))
@@ -119,10 +118,10 @@ class BoardControllerTest {
     @Test
     void shouldGetBoardsByOrganizationAndReturn404NotFound() throws Exception {
 
-        Long orgId = 999L;
+        Long orgId = BoardTestDataFactory.INVALID_ORG_ID;
 
         when(boardService.getBoardsByOrganization(orgId))
-                .thenThrow(new OrganisationNotFoundException(orgId));
+                .thenThrow(new com.tarakki.common.exceptionHandling.OrganisationNotFoundException(orgId));
 
         mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
                         .contentType(MediaType.APPLICATION_JSON))

@@ -1,18 +1,24 @@
 package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.common.exceptionHandling.OrganisationNotFoundException;
 import com.tarakki.common.entity.Board;
 import com.tarakki.boardtask.repository.BoardRepository;
+import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
+    private final OrganizationRepository organizationRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -22,5 +28,19 @@ public class BoardServiceImpl implements BoardService {
         Board savedBoard = boardRepository.save(board);
 
         return modelMapper.map(savedBoard, BoardDTO.class);
+    }
+
+    @Override
+    public List<BoardDTO> getBoardsByOrganization(Long orgId) {
+
+        // Validate organization exists
+        if (!organizationRepository.existsById(orgId)) {
+            throw new OrganisationNotFoundException(orgId);
+        }
+
+        List<Board> boards = boardRepository.findByOrgId(orgId);
+        return boards.stream()
+                .map(board -> modelMapper.map(board, BoardDTO.class))
+                .collect(Collectors.toList());
     }
 }

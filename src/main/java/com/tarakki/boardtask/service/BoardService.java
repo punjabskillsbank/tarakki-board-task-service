@@ -6,5 +6,5 @@ public interface BoardService {
 
     BoardDTO createBoard(BoardDTO boardDTO);
 
-    void deleteBoard(Long boardId);
+    int deleteBoard(Long boardId);
 }

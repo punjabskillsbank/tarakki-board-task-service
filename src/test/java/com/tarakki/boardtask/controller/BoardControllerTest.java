@@ -3,7 +3,6 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
-import com.tarakki.common.exceptionHandling.BoardIdNotFoundException;
 import  org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
@@ -105,21 +104,26 @@ class BoardControllerTest {
     @Test
     void shouldDeleteBoard() throws Exception {
 
+        when(boardService.deleteBoard(EXISTING_BOARD_ID))
+                .thenReturn(1);
+
         mockMvc.perform(delete("/api/boards/{boardId}", EXISTING_BOARD_ID))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(content().string("1"));
 
         verify(boardService).deleteBoard(EXISTING_BOARD_ID);
     }
 
     @Test
-    void shouldReturnNotFoundWhenBoardDoesNotExist() throws Exception {
+    void shouldReturnZeroWhenBoardDoesNotExist() throws Exception {
 
-        doThrow(new BoardIdNotFoundException(MISSING_BOARD_ID))
-                .when(boardService)
-                .deleteBoard(MISSING_BOARD_ID);
+        when(boardService.deleteBoard(MISSING_BOARD_ID))
+                .thenReturn(0);
 
         mockMvc.perform(delete("/api/boards/{boardId}", MISSING_BOARD_ID))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("Board not found with id: " + MISSING_BOARD_ID));
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+
+        verify(boardService).deleteBoard(MISSING_BOARD_ID);
     }
 }

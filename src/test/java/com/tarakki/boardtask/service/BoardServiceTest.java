@@ -2,7 +2,6 @@ package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.common.entity.Board;
-import com.tarakki.common.exceptionHandling.BoardIdNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
@@ -71,28 +70,28 @@ class BoardServiceTest {
     @Test
     void shouldDeleteBoard() {
 
-        when(boardRepository.existsById(existingBoardId))
-                .thenReturn(true);
+        when(boardRepository.deleteBoardById(existingBoardId))
+                .thenReturn(1);
 
-        boardService.deleteBoard(existingBoardId);
+        int deletedRows = boardService.deleteBoard(existingBoardId);
 
-        verify(boardRepository).existsById(existingBoardId);
-        verify(boardRepository).deleteById(existingBoardId);
+        assertEquals(1, deletedRows);
+        verify(boardRepository).deleteBoardById(existingBoardId);
+        verify(boardRepository, never()).existsById(anyLong());
+        verify(boardRepository, never()).deleteById(anyLong());
     }
 
     @Test
-    void shouldThrowWhenDeletingMissingBoard() {
+    void shouldReturnZeroWhenDeletingMissingBoard() {
 
-        when(boardRepository.existsById(missingBoardId))
-                .thenReturn(false);
+        when(boardRepository.deleteBoardById(missingBoardId))
+                .thenReturn(0);
 
-        BoardIdNotFoundException exception = assertThrows(
-                BoardIdNotFoundException.class,
-                () -> boardService.deleteBoard(missingBoardId)
-        );
+        int deletedRows = boardService.deleteBoard(missingBoardId);
 
-        assertEquals("Board not found with id: " + missingBoardId, exception.getMessage());
-        verify(boardRepository).existsById(missingBoardId);
+        assertEquals(0, deletedRows);
+        verify(boardRepository).deleteBoardById(missingBoardId);
+        verify(boardRepository, never()).existsById(anyLong());
         verify(boardRepository, never()).deleteById(anyLong());
     }
 }

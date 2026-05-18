@@ -2,9 +2,9 @@ package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.common.entity.Board;
-import com.tarakki.common.exceptionHandling.BoardIdNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.service.BoardService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -26,11 +26,8 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public void deleteBoard(Long boardId) {
-        if (!boardRepository.existsById(boardId)) {
-            throw new BoardIdNotFoundException(boardId);
-        }
-
-        boardRepository.deleteById(boardId);
+    @Transactional
+    public int deleteBoard(Long boardId) {
+        return boardRepository.deleteBoardById(boardId);
     }
 }

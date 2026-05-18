@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/boards")
 @RequiredArgsConstructor
@@ -26,5 +28,12 @@ public class BoardController {
     public ResponseEntity<Integer> deleteBoard(@PathVariable Long boardId) {
         int deletedRows = boardService.deleteBoard(boardId);
         return ResponseEntity.ok(deletedRows);
+    }
+}
+    @GetMapping("/organization/{orgId}")
+    public ResponseEntity<List<BoardDTO>> getBoardsByOrganization(@PathVariable Long orgId) {
+
+        List<BoardDTO> result = boardService.getBoardsByOrganization(orgId);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

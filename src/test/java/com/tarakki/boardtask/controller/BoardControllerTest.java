@@ -3,7 +3,7 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
-import  org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +13,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
 import static com.tarakki.boardtask.util.BoardTestDataFactory.MISSING_BOARD_ID;
@@ -38,9 +42,9 @@ class BoardControllerTest {
     private BoardDTO output;
 
     @BeforeEach
-    void setUp() {
-        input = BoardTestDataFactory.createBoardDTO();
-        output = BoardTestDataFactory.createBoardDTO();
+        void setUp() {
+                input = BoardTestDataFactory.createBoardDTO();
+                output = BoardTestDataFactory.createBoardDTO();
     }
 
     @Test
@@ -125,5 +129,33 @@ class BoardControllerTest {
                 .andExpect(content().string("0"));
 
         verify(boardService).deleteBoard(MISSING_BOARD_ID);
+    }
+}
+    void shouldGetBoardsByOrganizationAndReturn200Ok() throws Exception {
+
+        Long orgId = BoardTestDataFactory.VALID_ORG_ID;
+        List<BoardDTO> boards = List.of(output);
+
+        when(boardService.getBoardsByOrganization(orgId))
+                .thenReturn(boards);
+
+        mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].boardName").value(output.getBoardName()))
+                .andExpect(jsonPath("$[0].boardDesc").value(output.getBoardDesc()));
+    }
+
+    @Test
+    void shouldGetBoardsByOrganizationAndReturn404NotFound() throws Exception {
+
+        Long orgId = BoardTestDataFactory.INVALID_ORG_ID;
+
+        when(boardService.getBoardsByOrganization(orgId))
+                .thenThrow(new com.tarakki.common.exceptionHandling.OrganisationNotFoundException(orgId));
+
+        mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 }

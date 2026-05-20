@@ -130,7 +130,8 @@ class BoardControllerTest {
 
         verify(boardService).deleteBoard(MISSING_BOARD_ID);
     }
-}
+
+    @Test
     void shouldGetBoardsByOrganizationAndReturn200Ok() throws Exception {
 
         Long orgId = BoardTestDataFactory.VALID_ORG_ID;

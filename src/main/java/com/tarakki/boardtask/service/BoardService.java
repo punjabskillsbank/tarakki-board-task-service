@@ -9,6 +9,6 @@ public interface BoardService {
     BoardDTO createBoard(BoardDTO boardDTO);
 
     int deleteBoard(Long boardId);
-}
+
     List<BoardDTO> getBoardsByOrganization(Long orgId);
 }

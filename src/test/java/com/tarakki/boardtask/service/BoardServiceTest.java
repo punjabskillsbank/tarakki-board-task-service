@@ -100,6 +100,9 @@ class BoardServiceTest {
         verify(boardRepository).deleteBoardById(missingBoardId);
         verify(boardRepository, never()).existsById(anyLong());
         verify(boardRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
     void shouldGetBoardsByOrganizationSuccessfully() {
 
         Long orgId = BoardTestDataFactory.VALID_ORG_ID;

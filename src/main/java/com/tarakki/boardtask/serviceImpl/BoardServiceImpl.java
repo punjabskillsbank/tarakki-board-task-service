@@ -12,7 +12,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,10 +35,10 @@ public class BoardServiceImpl implements BoardService {
     public int deleteBoard(Long boardId) {
         return boardRepository.deleteBoardById(boardId);
     }
-}
+
+    @Override
     public List<BoardDTO> getBoardsByOrganization(Long orgId) {
 
-        // Validate organization exists
         if (!organizationRepository.existsById(orgId)) {
             throw new OrganisationNotFoundException(orgId);
         }
@@ -47,6 +46,6 @@ public class BoardServiceImpl implements BoardService {
         List<Board> boards = boardRepository.findByOrgId(orgId);
         return boards.stream()
                 .map(board -> modelMapper.map(board, BoardDTO.class))
-                .collect(Collectors.toList());
+                .toList();
     }
 }

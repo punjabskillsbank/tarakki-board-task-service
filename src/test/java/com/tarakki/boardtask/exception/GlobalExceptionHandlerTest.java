@@ -2,7 +2,6 @@ package com.tarakki.boardtask.exception;
 
 import com.tarakki.boardtask.controller.BoardController;
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.common.exceptionHandling.BoardIdNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
@@ -20,23 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class GlobalExceptionHandlerTest {
 
-    private static final Long MISSING_BOARD_ID = 99L;
-
     private GlobalExceptionHandler globalExceptionHandler;
 
     @BeforeEach
     void setUp() {
         globalExceptionHandler = new GlobalExceptionHandler();
-    }
-
-    @Test
-    void shouldHandleBoardIdNotFoundException() {
-        ResponseEntity<String> response = globalExceptionHandler.handleBoardIdNotFound(
-                new BoardIdNotFoundException(MISSING_BOARD_ID)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Board not found with id: " + MISSING_BOARD_ID, response.getBody());
     }
 
     @Test

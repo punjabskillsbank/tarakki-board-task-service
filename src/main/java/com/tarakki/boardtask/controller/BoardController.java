@@ -29,7 +29,7 @@ public class BoardController {
         int deletedRows = boardService.deleteBoard(boardId);
         return ResponseEntity.ok(deletedRows);
     }
-}
+
     @GetMapping("/organization/{orgId}")
     public ResponseEntity<List<BoardDTO>> getBoardsByOrganization(@PathVariable Long orgId) {
 

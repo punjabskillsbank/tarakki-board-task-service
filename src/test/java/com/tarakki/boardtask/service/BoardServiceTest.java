@@ -80,9 +80,8 @@ class BoardServiceTest {
         when(boardRepository.deleteBoardById(existingBoardId))
                 .thenReturn(1);
 
-        int deletedRows = boardService.deleteBoard(existingBoardId);
+        boardService.deleteBoard(existingBoardId);
 
-        assertEquals(1, deletedRows);
         verify(boardRepository).deleteBoardById(existingBoardId);
         verify(boardRepository, never()).existsById(anyLong());
         verify(boardRepository, never()).deleteById(anyLong());
@@ -94,9 +93,8 @@ class BoardServiceTest {
         when(boardRepository.deleteBoardById(missingBoardId))
                 .thenReturn(0);
 
-        int deletedRows = boardService.deleteBoard(missingBoardId);
+        boardService.deleteBoard(missingBoardId);
 
-        assertEquals(0, deletedRows);
         verify(boardRepository).deleteBoardById(missingBoardId);
         verify(boardRepository, never()).existsById(anyLong());
         verify(boardRepository, never()).deleteById(anyLong());

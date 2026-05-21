@@ -25,9 +25,9 @@ public class BoardController {
     }
 
     @DeleteMapping("/{boardId}")
-    public ResponseEntity<Integer> deleteBoard(@PathVariable Long boardId) {
-        int deletedRows = boardService.deleteBoard(boardId);
-        return ResponseEntity.ok(deletedRows);
+    public ResponseEntity<Void> deleteBoard(@PathVariable Long boardId) {
+        boardService.deleteBoard(boardId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/organization/{orgId}")

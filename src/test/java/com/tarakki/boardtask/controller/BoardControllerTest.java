@@ -108,25 +108,22 @@ class BoardControllerTest {
     @Test
     void shouldDeleteBoard() throws Exception {
 
-        when(boardService.deleteBoard(EXISTING_BOARD_ID))
-                .thenReturn(1);
+        doNothing().when(boardService).deleteBoard(EXISTING_BOARD_ID);
 
         mockMvc.perform(delete("/api/boards/{boardId}", EXISTING_BOARD_ID))
-                .andExpect(status().isOk())
-                .andExpect(content().string("1"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         verify(boardService).deleteBoard(EXISTING_BOARD_ID);
     }
 
     @Test
-    void shouldReturnZeroWhenBoardDoesNotExist() throws Exception {
-
-        when(boardService.deleteBoard(MISSING_BOARD_ID))
-                .thenReturn(0);
+    void shouldReturnNoContentWhenBoardDoesNotExist() throws Exception {
+        doNothing().when(boardService).deleteBoard(MISSING_BOARD_ID);
 
         mockMvc.perform(delete("/api/boards/{boardId}", MISSING_BOARD_ID))
-                .andExpect(status().isOk())
-                .andExpect(content().string("0"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         verify(boardService).deleteBoard(MISSING_BOARD_ID);
     }

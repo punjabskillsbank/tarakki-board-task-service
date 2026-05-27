@@ -15,10 +15,16 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
+import static com.tarakki.boardtask.util.BoardTestDataFactory.MISSING_BOARD_ID;
 
 @WebMvcTest(BoardController.class)
 class BoardControllerTest {
@@ -97,6 +103,29 @@ class BoardControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldDeleteBoard() throws Exception {
+
+        doNothing().when(boardService).deleteBoard(EXISTING_BOARD_ID);
+
+        mockMvc.perform(delete("/api/boards/{boardId}", EXISTING_BOARD_ID))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        verify(boardService).deleteBoard(EXISTING_BOARD_ID);
+    }
+
+    @Test
+    void shouldReturnNoContentWhenBoardDoesNotExist() throws Exception {
+        doNothing().when(boardService).deleteBoard(MISSING_BOARD_ID);
+
+        mockMvc.perform(delete("/api/boards/{boardId}", MISSING_BOARD_ID))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        verify(boardService).deleteBoard(MISSING_BOARD_ID);
     }
 
     @Test

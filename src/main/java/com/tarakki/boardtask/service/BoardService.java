@@ -8,5 +8,7 @@ public interface BoardService {
 
     BoardDTO createBoard(BoardDTO boardDTO);
 
+    void deleteBoard(Long boardId);
+
     List<BoardDTO> getBoardsByOrganization(Long orgId);
 }

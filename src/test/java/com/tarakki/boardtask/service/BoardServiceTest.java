@@ -38,11 +38,15 @@ class BoardServiceTest {
 
     private BoardDTO dto;
     private Board board;
+    private Long existingBoardId;
+    private Long missingBoardId;
 
     @BeforeEach
     void setUp() {
         dto = BoardTestDataFactory.createBoardDTO();
         board = BoardTestDataFactory.createBoardEntity();
+        existingBoardId = BoardTestDataFactory.createExistingBoardId();
+        missingBoardId = BoardTestDataFactory.createMissingBoardId();
     }
 
     @Test
@@ -68,6 +72,32 @@ class BoardServiceTest {
         verify(modelMapper).map(any(BoardDTO.class), eq(Board.class));
         verify(boardRepository).save(any(Board.class));
         verify(modelMapper).map(any(Board.class), eq(BoardDTO.class));
+    }
+
+    @Test
+    void shouldDeleteBoard() {
+
+        when(boardRepository.deleteBoardById(existingBoardId))
+                .thenReturn(1);
+
+        boardService.deleteBoard(existingBoardId);
+
+        verify(boardRepository).deleteBoardById(existingBoardId);
+        verify(boardRepository, never()).existsById(anyLong());
+        verify(boardRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void shouldReturnZeroWhenDeletingMissingBoard() {
+
+        when(boardRepository.deleteBoardById(missingBoardId))
+                .thenReturn(0);
+
+        boardService.deleteBoard(missingBoardId);
+
+        verify(boardRepository).deleteBoardById(missingBoardId);
+        verify(boardRepository, never()).existsById(anyLong());
+        verify(boardRepository, never()).deleteById(anyLong());
     }
 
     @Test

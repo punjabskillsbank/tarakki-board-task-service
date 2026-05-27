@@ -24,6 +24,12 @@ public class BoardController {
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<Void> deleteBoard(@PathVariable Long boardId) {
+        boardService.deleteBoard(boardId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/organization/{orgId}")
     public ResponseEntity<List<BoardDTO>> getBoardsByOrganization(@PathVariable Long orgId) {
 

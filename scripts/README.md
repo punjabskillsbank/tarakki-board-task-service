@@ -7,8 +7,8 @@ To maintain a clean and consistent Git history during development, we enforce br
 Use the following format:
 
 ```text
-feature/TK_123
-bugfix/TK_456
+feature/TK_<TICKET_ID>
+bugfix/TK_<TICKET_ID>
 ```
 
 ### Commit Message Format
@@ -16,7 +16,7 @@ bugfix/TK_456
 Use the following format:
 
 ```text
-TK_123: Your commit message
+TK_<TICKET_ID>: Your commit message
 ```
 
 ### Validation Rules
@@ -30,13 +30,13 @@ TK_123: Your commit message
 Branch:
 
 ```text
-feature/TK_123
+feature/TK_<TICKET_ID>
 ```
 
 Valid Commit:
 
 ```text
-TK_123: Add login API
+TK_<TICKET_ID>: Add login API
 ```
 
 Invalid Commit:

@@ -7,7 +7,7 @@ if [[ "$BRANCH" =~ ^(feature|bugfix)/(TK_[0-9]+)$ ]]; then
 else
     echo "Invalid branch name"
     echo "Branch format must be: feature/TK_<TICKET_ID> or bugfix/TK_<TICKET_ID>"
-    echo "Branch Creation Failed"
+    echo "Please rename the branch!"
     exit 1
 fi
 

@@ -21,9 +21,9 @@ jobs:
 
           echo "Branch: $BRANCH"
 
-          # Allow main branch
-          if [[ "$BRANCH" == "main" ]]; then
-            echo "Skipping validation for main"
+          # Allow main and develop branches
+          if [[ "$BRANCH" == "develop" ]]; then
+            echo "Skipping validation for $BRANCH"
             exit 0
           fi
 
@@ -45,12 +45,30 @@ jobs:
               --format="%s" \
               ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
           else
-            COMMITS=$(git log \
-              --format="%s" \
-              ${{ github.event.before }}..${{ github.sha }})
+            # Exclude commits already on the base branch (develop or main)
+            BASE_BRANCH=""
+            if git rev-parse --verify origin/develop &>/dev/null; then
+              BASE_BRANCH="origin/develop"
+            elif git rev-parse --verify origin/main &>/dev/null; then
+              BASE_BRANCH="origin/main"
+            elif git rev-parse --verify develop &>/dev/null; then
+              BASE_BRANCH="develop"
+            elif git rev-parse --verify main &>/dev/null; then
+              BASE_BRANCH="main"
+            fi
+
+            if [[ -n "$BASE_BRANCH" ]]; then
+              COMMITS=$(git log --format="%s" "$BASE_BRANCH..HEAD")
+            else
+              COMMITS=$(git log --format="%s" -1 HEAD)
+            fi
           fi
 
           while IFS= read -r COMMIT; do
+            # Skip empty lines
+            if [[ -z "$COMMIT" ]]; then
+              continue
+            fi
 
             echo "Checking: $COMMIT"
 
@@ -64,7 +82,7 @@ jobs:
             COMMIT_TICKET="TK_${BASH_REMATCH[1]}"
 
             if [[ "$COMMIT_TICKET" != "$TICKET" ]]; then
-              echo "❌ Ticket mismatch"
+              echo "Ticket mismatch"
               echo "Branch Ticket : $TICKET"
               echo "Commit Ticket : $COMMIT_TICKET"
               exit 1

@@ -1,0 +1,73 @@
+name: Convention Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Branch and Commits
+        shell: bash
+        run: |
+
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+
+          echo "Branch: $BRANCH"
+
+          # Allow main branch
+          if [[ "$BRANCH" == "main" ]]; then
+            echo "Skipping validation for main"
+            exit 0
+          fi
+
+          # Validate branch format
+          if [[ ! "$BRANCH" =~ ^(feature|bugfix)/TK_([0-9]+)$ ]]; then
+            echo "Invalid branch name"
+            echo "Expected: feature/TK_<TICKET_ID> or bugfix/TK_<TICKET_ID>"
+            echo "Please rename the branch!"
+            exit 1
+          fi
+
+          TICKET="TK_${BASH_REMATCH[2]}"
+
+          echo "Ticket extracted: $TICKET"
+
+          # Determine commit range
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            COMMITS=$(git log \
+              --format="%s" \
+              ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          else
+            COMMITS=$(git log \
+              --format="%s" \
+              ${{ github.event.before }}..${{ github.sha }})
+          fi
+
+          while IFS= read -r COMMIT; do
+
+            echo "Checking: $COMMIT"
+
+            if [[ ! "$COMMIT" =~ ^TK_([0-9]+):\ .+$ ]]; then
+              echo "Invalid commit message"
+              echo "Expected format: $TICKET: message"
+              echo "Commit not saved!"
+              exit 1
+            fi
+
+            COMMIT_TICKET="TK_${BASH_REMATCH[1]}"
+
+            if [[ "$COMMIT_TICKET" != "$TICKET" ]]; then
+              echo "❌ Ticket mismatch"
+              echo "Branch Ticket : $TICKET"
+              echo "Commit Ticket : $COMMIT_TICKET"
+              exit 1
+            fi
+
+          done <<< "$COMMITS"

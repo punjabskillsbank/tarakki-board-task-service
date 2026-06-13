@@ -150,10 +150,39 @@ class BoardControllerTest {
         Long orgId = BoardTestDataFactory.INVALID_ORG_ID;
 
         when(boardService.getBoardsByOrganization(orgId))
-                .thenThrow(new com.tarakki.common.exceptionHandling.OrganisationNotFoundException(orgId));
+                .thenThrow(new com.tarakki.common.exceptionHandling.OrganizationNotFoundException(orgId));
 
         mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void shouldGetBoardByIdAndReturn200Ok() throws Exception {
+
+        Long boardId = EXISTING_BOARD_ID;
+
+        when(boardService.getBoardById(boardId))
+                .thenReturn(output);
+
+        mockMvc.perform(get("/api/boards/{id}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.boardName").value(output.getBoardName()))
+                .andExpect(jsonPath("$.boardDesc").value(output.getBoardDesc()));
+    }
+
+    @Test
+    void shouldGetBoardByIdAndReturn404WhenNotFound() throws Exception {
+
+        Long boardId = MISSING_BOARD_ID;
+
+        when(boardService.getBoardById(boardId))
+                .thenThrow(new com.tarakki.common.exceptionHandling.BoardNotFoundException(boardId));
+
+        mockMvc.perform(get("/api/boards/{id}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
 }

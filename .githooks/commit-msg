@@ -2,6 +2,11 @@
 
 BRANCH=$(git branch --show-current)
 
+# Bypass validation for main and develop branches
+if [[ "$BRANCH" == "develop" || "$BRANCH" == "main" ]]; then
+    exit 0
+fi
+
 if [[ "$BRANCH" =~ ^(feature|bugfix)/(TK_[0-9]+)$ ]]; then
     BRANCH_TK="${BASH_REMATCH[2]}"
 else

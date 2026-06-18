@@ -1,5 +1,6 @@
 package com.tarakki.boardtask.exception;
 
+import com.tarakki.common.exceptionHandling.BoardNotFoundException;
 import com.tarakki.common.exceptionHandling.OrganisationNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OrganisationNotFoundException.class)
     public ResponseEntity<String> handleOrganisationNotFoundException(OrganisationNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(BoardNotFoundException.class)
+    public ResponseEntity<String> handleBoardsNotFoundException(BoardNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }

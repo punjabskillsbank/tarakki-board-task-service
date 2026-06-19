@@ -61,7 +61,6 @@ chmod +x scripts/setup-hooks.sh
 ```cmd
 scripts\setup-hooks.bat
 ```
-fuuhookplphyu vi 
 
 This configures Git to use the project's shared hooks and enables local validation before commits are created.
 

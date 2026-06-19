@@ -19,7 +19,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -178,7 +177,7 @@ class BoardControllerTest {
         Long boardId = MISSING_BOARD_ID;
 
         when(boardService.getBoardById(boardId))
-                .thenThrow(new com.tarakki.common.exceptionHandling.BoardNotFoundException(boardId));
+                .thenThrow(new com.tarakki.boardtask.exception.BoardNotFoundException(boardId));
 
         mockMvc.perform(get("/api/boards/{id}", boardId)
                         .contentType(MediaType.APPLICATION_JSON))

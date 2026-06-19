@@ -1,6 +1,6 @@
 package com.tarakki.boardtask.exception;
 
-import com.tarakki.common.exceptionHandling.BoardNotFoundException;
+import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.exceptions;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.GlobalExceptionHandler;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
@@ -69,17 +70,17 @@ class GlobalExceptionHandlerTest {
             throw new OrganizationNotFoundException(BoardTestDataFactory.INVALID_ORG_ID);
         }
     }
-
     @Test
     void shouldHandleBoardNotFoundException() {
 
-        com.tarakki.common.exceptionHandling.BoardNotFoundException ex =
-                new com.tarakki.common.exceptionHandling.BoardNotFoundException(1L);
+        Long testBoardId = BoardTestDataFactory.MISSING_BOARD_ID;
+
+        BoardNotFoundException ex = new BoardNotFoundException(testBoardId);
 
         GlobalExceptionHandler handler = new GlobalExceptionHandler();
         ResponseEntity<String> response = handler.handleBoardNotFoundException(ex);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Board not found with id: 1", response.getBody());
+        assertEquals("Board not found with id: " + testBoardId, response.getBody());
     }
 }

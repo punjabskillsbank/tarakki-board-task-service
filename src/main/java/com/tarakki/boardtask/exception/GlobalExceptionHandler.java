@@ -29,6 +29,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+
     @ExceptionHandler(BoardNotFoundException.class)
     public ResponseEntity<String> handleBoardNotFoundException(BoardNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());

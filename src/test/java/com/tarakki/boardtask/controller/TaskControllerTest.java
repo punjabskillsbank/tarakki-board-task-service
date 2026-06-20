@@ -32,30 +32,74 @@ public class TaskControllerTest {
     private ObjectMapper objectMapper;
 
     private Long boardId;
-    private TaskDTO input;
-    private TaskDTO output;
+    private TaskDTO taskDto;
 
     @BeforeEach
     void setUp() {
-        input = TaskTestDataFactory.createTaskDto();
-        output = TaskTestDataFactory.createTaskDto();
+        taskDto = TaskTestDataFactory.createTaskDto();
         boardId = TaskTestDataFactory.BOARD_ID;
     }
 
     @Test
     void shouldCreateTaskBySpecifiedBoardId() throws Exception {
 
-        when(taskService.createTaskBySpecifiedBoardId(any(), eq(boardId)))
-                .thenReturn(output);
+        when(taskService.createTaskByBoardId(any(), eq(boardId)))
+                .thenReturn(taskDto);
 
         mockMvc.perform(post("/api/tasks/{boardId}", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+                        .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.groupId").value(output.getGroupId()))
-                .andExpect(jsonPath("$.title").value(output.getTitle()))
-                .andExpect(jsonPath("$.position").value(output.getPosition()))
-                .andExpect(jsonPath("$.createdBy").value(output.getCreatedBy().toString()));
+                .andExpect(jsonPath("$.groupId").value(taskDto.getGroupId()))
+                .andExpect(jsonPath("$.title").value(taskDto.getTitle()))
+                .andExpect(jsonPath("$.position").value(taskDto.getPosition()))
+                .andExpect(jsonPath("$.createdBy").value(taskDto.getCreatedBy().toString()));
 
     }
+
+
+    @Test
+    void shouldReturnBadRequestWhenBoardIdIsMissing() throws Exception {
+
+        taskDto.setBoardId(null);
+
+        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenGroupIdIsMissing() throws Exception {
+
+        taskDto.setGroupId(null);
+
+        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenTitleIsMissing() throws Exception {
+
+        taskDto.setTitle(null);
+
+        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
+
+        taskDto.setCreatedBy(null);
+
+        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
+    }
+
 }

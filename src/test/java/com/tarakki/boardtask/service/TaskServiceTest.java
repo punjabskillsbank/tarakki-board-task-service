@@ -1,13 +1,14 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.serviceImpl.TaskServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
 import com.tarakki.common.entity.Board;
-import com.tarakki.common.entity.Task;
+import com.tarakki.boardtask.entity.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,10 +19,8 @@ import org.modelmapper.ModelMapper;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,7 +54,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void shouldCreateTaskBySpecifiedBoardId() {
+    void shouldCreateTaskByBoardId() {
 
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
@@ -69,9 +68,10 @@ public class TaskServiceTest {
         when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
                 .thenReturn(taskDTO);
 
-        TaskDTO result = taskService.createTaskBySpecifiedBoardId(taskDTO, boardId);
+        TaskDTO result = taskService.createTaskByBoardId(taskDTO, boardId);
 
         assertNotNull(result);
+        assertEquals(taskDTO.getBoardId(), result.getBoardId());
         assertEquals(taskDTO.getGroupId(), result.getGroupId());
         assertEquals(taskDTO.getTitle(), result.getTitle());
         assertEquals(taskDTO.getPosition(), result.getPosition());
@@ -82,5 +82,16 @@ public class TaskServiceTest {
         verify(taskRepository).save(any(Task.class));
         verify(modelMapper).map(any(Task.class), eq(TaskDTO.class));
 
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
+
+        when(boardRepository.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException boardNotFoundException = assertThrows(BoardNotFoundException.class,
+                () -> taskService.createTaskByBoardId(taskDTO, 896L)
+        );
     }
 }

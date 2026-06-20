@@ -16,6 +16,9 @@ import java.util.UUID;
 public class TaskDTO {
 
     @NotNull
+    private Long boardId;
+
+    @NotNull
     private Long groupId;
 
     @NotBlank

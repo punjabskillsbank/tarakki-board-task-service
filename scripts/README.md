@@ -56,7 +56,7 @@ chmod +x scripts/setup-hooks.sh
 ./scripts/setup-hooks.sh
 ```
 
-**Windows**
+**Windows** abc
 
 ```cmd
 scripts\setup-hooks.bat

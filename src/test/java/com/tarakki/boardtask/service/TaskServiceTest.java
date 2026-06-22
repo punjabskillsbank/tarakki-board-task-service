@@ -42,6 +42,7 @@ public class TaskServiceTest {
     private TaskDTO taskDTO;
     private Task taskEntity;
     private Long boardId;
+    private Long invalidBoardId;
     private Board board;
 
     @BeforeEach
@@ -49,6 +50,7 @@ public class TaskServiceTest {
         taskDTO = TaskTestDataFactory.createTaskDto();
         taskEntity = TaskTestDataFactory.createTaskEntity();
         boardId = TaskTestDataFactory.BOARD_ID;
+        invalidBoardId = TaskTestDataFactory.INVALID_BOARD_ID;
         board = BoardTestDataFactory.createBoardEntity();
 
     }
@@ -91,7 +93,7 @@ public class TaskServiceTest {
                 .thenReturn(Optional.empty());
 
         BoardNotFoundException boardNotFoundException = assertThrows(BoardNotFoundException.class,
-                () -> taskService.createTaskByBoardId(taskDTO, 896L)
+                () -> taskService.createTaskByBoardId(taskDTO, invalidBoardId)
         );
     }
 }

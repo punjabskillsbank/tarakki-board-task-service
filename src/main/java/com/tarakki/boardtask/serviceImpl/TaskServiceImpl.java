@@ -25,7 +25,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskDTO createTaskByBoardId(TaskDTO taskDTO, Long boardId) {
 
         Board boards = boardRepository.findById(boardId)
-                .orElseThrow(() -> new BoardNotFoundException(boardId)); // if board is not present of given id , throws an Exception
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
 
         Task task = modelMapper.map(taskDTO, Task.class);
 

@@ -6,7 +6,8 @@ import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
-import com.tarakki.common.exceptionHandling.OrganisationNotFoundException;
+import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -128,22 +130,52 @@ class BoardServiceTest {
     }
 
     @Test
-    void shouldThrowOrganisationNotFoundExceptionWhenOrgIdDoesNotExist() {
+    void shouldThrowOrganizationNotFoundExceptionWhenOrgIdDoesNotExist() {
 
         Long orgId = BoardTestDataFactory.INVALID_ORG_ID;
 
         when(organizationRepository.existsById(orgId))
                 .thenReturn(false);
 
-        OrganisationNotFoundException exception = assertThrows(
-                OrganisationNotFoundException.class,
+        OrganizationNotFoundException exception = assertThrows(
+                OrganizationNotFoundException.class,
                 () -> boardService.getBoardsByOrganization(orgId)
         );
 
-        assertEquals("Organisation with id " + orgId + " not found", exception.getMessage());
+        assertEquals("Organization with id " + orgId + " not found", exception.getMessage());
 
         verify(organizationRepository).existsById(orgId);
         verify(boardRepository, never()).findByOrgId(anyLong());
         verify(modelMapper, never()).map(any(Board.class), eq(BoardDTO.class));
+    }
+
+    @Test
+    void shouldGetBoardByIdSuccessfully() {
+
+        when(boardRepository.findById(existingBoardId))
+                .thenReturn(Optional.of(board));
+        when(modelMapper.map(board, BoardDTO.class))
+                .thenReturn(dto);
+
+        BoardDTO result = boardService.getBoardById(existingBoardId);
+
+        assertNotNull(result);
+        assertEquals(dto.getBoardName(), result.getBoardName());
+        verify(boardRepository).findById(existingBoardId);
+        verify(modelMapper).map(board, BoardDTO.class);
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
+
+        when(boardRepository.findById(missingBoardId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(BoardNotFoundException.class, () -> {
+            boardService.getBoardById(missingBoardId);
+        });
+
+        verify(boardRepository).findById(missingBoardId);
+        verify(modelMapper, never()).map(any(), any());
     }
 }

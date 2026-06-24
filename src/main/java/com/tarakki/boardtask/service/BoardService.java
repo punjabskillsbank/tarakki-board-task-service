@@ -11,4 +11,6 @@ public interface BoardService {
     void deleteBoard(Long boardId);
 
     List<BoardDTO> getBoardsByOrganization(Long orgId);
+
+    BoardDTO getBoardById(Long boardId);
 }

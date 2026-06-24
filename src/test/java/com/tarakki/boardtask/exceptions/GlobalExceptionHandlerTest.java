@@ -56,7 +56,7 @@ class GlobalExceptionHandlerTest {
 
         mockMvc.perform(get("/test/org-not-found/{id}", missingOrgId))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Organisation with id " + missingOrgId + " not found"));
+                .andExpect(content().string("Organization with id " + missingOrgId + " not found"));
     }
 
     @RestController

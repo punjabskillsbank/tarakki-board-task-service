@@ -39,7 +39,7 @@ public class BoardController {
 
     @GetMapping("/{boardId}")
     public ResponseEntity<BoardDTO> getBoardById(@PathVariable("boardId") Long boardId) {
-        BoardDTO memberDTO = boardService.getBoardById(boardId);
-        return ResponseEntity.ok(BoardDTO);
+        BoardDTO boardDTO = boardService.getBoardById(boardId);
+        return ResponseEntity.ok(boardDTO);
     }
 }

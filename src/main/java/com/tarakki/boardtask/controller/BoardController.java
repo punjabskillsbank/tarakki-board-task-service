@@ -36,4 +36,10 @@ public class BoardController {
         List<BoardDTO> result = boardService.getBoardsByOrganization(orgId);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
+
+    @GetMapping("/{boardId}")
+    public ResponseEntity<BoardDTO> getBoardById(@PathVariable("boardId") Long boardId) {
+        BoardDTO boardDTO = boardService.getBoardById(boardId);
+        return ResponseEntity.ok(boardDTO);
+    }
 }

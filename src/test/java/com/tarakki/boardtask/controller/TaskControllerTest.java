@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +11,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -68,6 +70,21 @@ public class TaskControllerTest {
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
     }
+
+
+    @Test
+    void shouldReturnNotFoundWhenBoardIdIsNotFound() throws Exception {
+        when(taskService.createTaskByBoardId(any(),eq(boardId)))
+                .thenThrow(new BoardNotFoundException(boardId));
+
+        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Board not found with id: " + boardId));
+    }
+
 
     @Test
     void shouldReturnBadRequestWhenGroupIdIsMissing() throws Exception {

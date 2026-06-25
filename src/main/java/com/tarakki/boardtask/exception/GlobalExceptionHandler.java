@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(OrganizationNotFoundException.class)
-    public ResponseEntity<String> handleOrganisationNotFoundException(OrganizationNotFoundException ex) {
+    public ResponseEntity<String> handleOrganizationNotFoundException(OrganizationNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 

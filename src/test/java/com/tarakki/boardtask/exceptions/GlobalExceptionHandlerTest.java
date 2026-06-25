@@ -51,7 +51,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void shouldHandleOrganisationNotFoundException() throws Exception {
+    void shouldHandleOrganizationNotFoundException() throws Exception {
         Long missingOrgId = BoardTestDataFactory.INVALID_ORG_ID;
 
         mockMvc.perform(get("/test/org-not-found/{id}", missingOrgId))

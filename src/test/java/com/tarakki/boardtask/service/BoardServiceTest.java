@@ -130,7 +130,7 @@ class BoardServiceTest {
     }
 
     @Test
-    void shouldThrowOrganisationNotFoundExceptionWhenOrgIdDoesNotExist() {
+    void shouldThrowOrganizationNotFoundExceptionWhenOrgIdDoesNotExist() {
 
         Long orgId = BoardTestDataFactory.INVALID_ORG_ID;
 

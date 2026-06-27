@@ -7,8 +7,10 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
-@EntityScan(basePackages = "com.tarakki.common.entity")
-@Import(CorsConfig.class)
+@EntityScan({
+		"com.tarakki.boardtask.entity",
+		"com.tarakki.common.entity"
+})@Import(CorsConfig.class)
 public class TarakkiBoardTaskServiceApplication {
 
 	public static void main(String[] args) {

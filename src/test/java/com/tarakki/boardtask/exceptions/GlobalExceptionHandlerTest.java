@@ -51,7 +51,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void shouldHandleOrganisationNotFoundException() throws Exception {
+    void shouldHandleOrganizationNotFoundException() throws Exception {
         Long missingOrgId = BoardTestDataFactory.INVALID_ORG_ID;
 
         mockMvc.perform(get("/test/org-not-found/{id}", missingOrgId))
@@ -70,6 +70,7 @@ class GlobalExceptionHandlerTest {
             throw new OrganizationNotFoundException(BoardTestDataFactory.INVALID_ORG_ID);
         }
     }
+
     @Test
     void shouldHandleBoardNotFoundException() {
 
@@ -78,9 +79,10 @@ class GlobalExceptionHandlerTest {
         BoardNotFoundException ex = new BoardNotFoundException(testBoardId);
 
         GlobalExceptionHandler handler = new GlobalExceptionHandler();
-        ResponseEntity<String> response = handler.handleBoardNotFoundException(ex);
+        ResponseEntity<String> response = handler.handleBoardsNotFoundException(ex);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals("Board not found with id: " + testBoardId, response.getBody());
     }
+
 }

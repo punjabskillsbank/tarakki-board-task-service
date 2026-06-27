@@ -49,10 +49,12 @@ public class BoardServiceImpl implements BoardService {
                 .map(board -> modelMapper.map(board, BoardDTO.class))
                 .toList();
     }
+
     @Override
     public BoardDTO getBoardById(Long boardId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
         return modelMapper.map(board, BoardDTO.class);
     }
+
 }

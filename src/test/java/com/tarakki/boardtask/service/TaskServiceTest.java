@@ -7,7 +7,7 @@ import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.serviceImpl.TaskServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
-import com.tarakki.common.entity.Board;
+import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,10 +17,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -95,5 +97,67 @@ public class TaskServiceTest {
         BoardNotFoundException boardNotFoundException = assertThrows(BoardNotFoundException.class,
                 () -> taskService.createTaskByBoardId(taskDTO, invalidBoardId)
         );
+    }
+
+    @Test
+    void shouldGetTasksByBoardIdSuccessfully() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(taskRepository.findByBoardId(boardId))
+                .thenReturn(List.of(taskEntity));
+
+        when(modelMapper.map(taskEntity, TaskDTO.class))
+                .thenReturn(taskDTO);
+
+        List<TaskDTO> result = taskService.getTasksByBoardId(boardId);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(taskDTO.getBoardId(), result.get(0).getBoardId());
+        assertEquals(taskDTO.getGroupId(), result.get(0).getGroupId());
+        assertEquals(taskDTO.getTitle(), result.get(0).getTitle());
+        assertEquals(taskDTO.getPosition(), result.get(0).getPosition());
+
+        verify(boardRepository).findById(boardId);
+        verify(taskRepository).findByBoardId(boardId);
+        verify(modelMapper).map(taskEntity, TaskDTO.class);
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenGettingTasksForUnknownBoard() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> taskService.getTasksByBoardId(boardId)
+        );
+
+        assertEquals("Board not found with id: " + boardId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(taskRepository, never()).findByBoardId(boardId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoTasksExistForBoard() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(taskRepository.findByBoardId(boardId))
+                .thenReturn(List.of());
+
+        List<TaskDTO> result = taskService.getTasksByBoardId(boardId);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
+        verify(boardRepository).findById(boardId);
+        verify(taskRepository).findByBoardId(boardId);
+        verify(modelMapper, never()).map(any(), any());
     }
 }

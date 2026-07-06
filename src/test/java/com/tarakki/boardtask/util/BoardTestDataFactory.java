@@ -1,7 +1,7 @@
 package com.tarakki.boardtask.util;
 
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.common.entity.Board;
+import com.tarakki.boardtask.entity.Board;
 
 import java.util.UUID;
 

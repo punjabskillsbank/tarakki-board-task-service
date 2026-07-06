@@ -1,7 +1,7 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.common.entity.Board;
+import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;

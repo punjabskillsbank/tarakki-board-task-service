@@ -60,6 +60,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/tarakki_local
           SPRING_DATASOURCE_USERNAME: tarakki
           SPRING_DATASOURCE_PASSWORD: tarakki
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
       - name: Publish test results
         uses: actions/upload-artifact@v4

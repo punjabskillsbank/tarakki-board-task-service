@@ -9,7 +9,7 @@ Use the following format:
 ```text
 feature/TK_<TICKET_ID>
 bugfix/TK_<TICKET_ID>
-```
+```aa
 
 ### Commit Message Format
 

@@ -1,8 +1,9 @@
 package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.common.exceptionHandling.OrganisationNotFoundException;
-import com.tarakki.common.entity.Board;
+import com.tarakki.boardtask.entity.Board;
+import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.service.BoardService;
@@ -40,7 +41,7 @@ public class BoardServiceImpl implements BoardService {
     public List<BoardDTO> getBoardsByOrganization(Long orgId) {
 
         if (!organizationRepository.existsById(orgId)) {
-            throw new OrganisationNotFoundException(orgId);
+            throw new OrganizationNotFoundException(orgId);
         }
 
         List<Board> boards = boardRepository.findByOrgId(orgId);
@@ -48,4 +49,12 @@ public class BoardServiceImpl implements BoardService {
                 .map(board -> modelMapper.map(board, BoardDTO.class))
                 .toList();
     }
+
+    @Override
+    public BoardDTO getBoardById(Long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+        return modelMapper.map(board, BoardDTO.class);
+    }
+
 }

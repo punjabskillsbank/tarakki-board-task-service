@@ -5,6 +5,10 @@ on:
     branches:
       - develop
 
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,23 +27,21 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U tarakki"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
+          distribution: temurin
+          java-version: 21
+          cache: maven
 
-      - name: Authenticate Maven with GitHub Packages
+      - name: Configure Maven
         run: |
           mkdir -p ~/.m2
           cat > ~/.m2/settings.xml <<EOF
@@ -54,17 +56,17 @@ jobs:
           </settings>
           EOF
 
-      - name: Run all JUnit tests
-        run: mvn test
+      - name: Run tests
+        run: mvn -B verify
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/tarakki_local
           SPRING_DATASOURCE_USERNAME: tarakki
           SPRING_DATASOURCE_PASSWORD: tarakki
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
-      - name: Publish test results
-        uses: actions/upload-artifact@v4
+      - name: Upload test results
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: target/surefire-reports/
+          name: surefire-reports
+          path: target/surefire-reports

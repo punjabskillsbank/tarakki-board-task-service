@@ -66,7 +66,7 @@ class BoardServiceTest {
         BoardDTO result = boardService.createBoard(dto);
 
         assertNotNull(result);
-        assertNotEquals(dto.getBoardName(), result.getBoardName());
+        assertEquals(dto.getBoardName(), result.getBoardName());
         assertEquals(dto.getBoardDesc(), result.getBoardDesc());
         assertEquals(dto.getOrgId(), result.getOrgId());
         assertEquals(dto.getCreatedBy(), result.getCreatedBy());

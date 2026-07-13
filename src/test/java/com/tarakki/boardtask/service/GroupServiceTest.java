@@ -4,6 +4,7 @@ import com.tarakki.boardtask.dto.GroupDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.GroupRepository;
 import com.tarakki.boardtask.serviceImpl.GroupServiceImpl;
@@ -44,6 +45,7 @@ public class GroupServiceTest {
     private Group groupEntity;
     private Long boardId;
     private Long invalidBoardId;
+    private Integer position;
     private Board board;
 
     @BeforeEach
@@ -52,6 +54,7 @@ public class GroupServiceTest {
         groupEntity = GroupTestDataFactory.createGroupEntity();
         boardId = GroupTestDataFactory.BOARD_ID;
         invalidBoardId = GroupTestDataFactory.INVALID_BOARD_ID;
+        position = GroupTestDataFactory.POSITION;
         board = BoardTestDataFactory.createBoardEntity();
     }
 
@@ -60,6 +63,9 @@ public class GroupServiceTest {
 
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
+
+        when(groupRepository.existsByBoardIdAndPosition(boardId, position))
+                .thenReturn(false);
 
         when(modelMapper.map(any(GroupDTO.class), eq(Group.class)))
                 .thenReturn(groupEntity);
@@ -79,34 +85,10 @@ public class GroupServiceTest {
         assertEquals(groupDTO.getCreatedBy(), result.getCreatedBy());
 
         verify(boardRepository).findById(boardId);
+        verify(groupRepository).existsByBoardIdAndPosition(boardId, position);
         verify(modelMapper).map(any(GroupDTO.class), eq(Group.class));
         verify(groupRepository).save(any(Group.class));
         verify(modelMapper).map(any(Group.class), eq(GroupDTO.class));
-    }
-
-    @Test
-    void shouldSetBoardIdFromPathVariableWhenCreatingGroup() {
-
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.ofNullable(board));
-
-        when(modelMapper.map(any(GroupDTO.class), eq(Group.class)))
-                .thenReturn(groupEntity);
-
-        when(groupRepository.save(any(Group.class)))
-                .thenReturn(groupEntity);
-
-        when(modelMapper.map(any(Group.class), eq(GroupDTO.class)))
-                .thenReturn(groupDTO);
-
-        groupDTO.setBoardId(GroupTestDataFactory.INVALID_BOARD_ID);
-
-        groupService.createGroupByBoardId(groupDTO, boardId);
-
-        assertEquals(boardId, groupEntity.getBoardId());
-
-        verify(boardRepository).findById(boardId);
-        verify(groupRepository).save(any(Group.class));
     }
 
     @Test
@@ -122,6 +104,29 @@ public class GroupServiceTest {
         assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
 
         verify(boardRepository).findById(invalidBoardId);
+        verify(groupRepository, never()).existsByBoardIdAndPosition(anyLong(), anyInt());
+        verify(groupRepository, never()).save(any(Group.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void shouldThrowPositionAlreadyExistsExceptionWhenPositionExistsUnderBoardId() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(groupRepository.existsByBoardIdAndPosition(boardId, position))
+                .thenReturn(true);
+
+        PositionAlreadyExistsException exception = assertThrows(PositionAlreadyExistsException.class,
+                () -> groupService.createGroupByBoardId(groupDTO, boardId)
+        );
+
+        assertEquals("Position " + position + " already exists for board id: " + boardId,
+                exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).existsByBoardIdAndPosition(boardId, position);
         verify(groupRepository, never()).save(any(Group.class));
         verify(modelMapper, never()).map(any(), any());
     }

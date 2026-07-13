@@ -2,6 +2,7 @@ package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.GroupDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
 import com.tarakki.boardtask.service.GroupService;
 import com.tarakki.boardtask.util.GroupTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,7 +61,7 @@ public class GroupControllerTest {
     }
 
     @Test
-    void shouldReturnNotFoundWhenBoardIdIsNotFound() throws Exception {
+    void shouldReturnNotFoundExceptionWhenBoardIdIsNotFound() throws Exception {
 
         when(groupService.createGroupByBoardId(any(), eq(boardId)))
                 .thenThrow(new BoardNotFoundException(boardId));
@@ -71,6 +72,20 @@ public class GroupControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board not found with id: " + boardId));
+    }
+
+    @Test
+    void shouldReturnConflictExceptionWhenPositionAlreadyExists() throws Exception {
+
+        when(groupService.createGroupByBoardId(any(), eq(boardId)))
+                .thenThrow(new PositionAlreadyExistsException(GroupTestDataFactory.POSITION, boardId));
+
+        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(groupDto)))
+                .andExpect(status().isConflict())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Position " + GroupTestDataFactory.POSITION + " already exists for board id: " + boardId));
     }
 
     @Test

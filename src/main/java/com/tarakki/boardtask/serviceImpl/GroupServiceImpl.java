@@ -22,22 +22,20 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public GroupDTO createGroupByBoardId(GroupDTO groupDTO, Long boardId) {
-
         boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
 
-        if (isPositionAlreadyExists(boardId, groupDTO.getPosition())) {
+        if (isPositionOccupied(boardId, groupDTO.getPosition())) {
             throw new PositionAlreadyExistsException(groupDTO.getPosition(), boardId);
         }
 
         Group group = modelMapper.map(groupDTO, Group.class);
-
         groupRepository.save(group);
 
         return modelMapper.map(group, GroupDTO.class);
     }
 
-    private boolean isPositionAlreadyExists(Long boardId, Integer position) {
+    private boolean isPositionOccupied(Long boardId, Integer position) {
         return groupRepository.existsByBoardIdAndPosition(boardId, position);
     }
 }

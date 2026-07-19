@@ -49,7 +49,7 @@ public class GroupControllerTest {
         when(groupService.createGroupByBoardId(any(), eq(boardId)))
                 .thenReturn(groupDto);
 
-        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isCreated())
@@ -66,7 +66,7 @@ public class GroupControllerTest {
         when(groupService.createGroupByBoardId(any(), eq(boardId)))
                 .thenThrow(new BoardNotFoundException(boardId));
 
-        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isNotFound())
@@ -80,7 +80,7 @@ public class GroupControllerTest {
         when(groupService.createGroupByBoardId(any(), eq(boardId)))
                 .thenThrow(new PositionAlreadyExistsException(GroupTestDataFactory.POSITION, boardId));
 
-        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isConflict())
@@ -93,7 +93,7 @@ public class GroupControllerTest {
 
         groupDto.setBoardId(null);
 
-        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());
@@ -104,7 +104,7 @@ public class GroupControllerTest {
 
         groupDto.setGroupName(null);
 
-        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());
@@ -115,7 +115,7 @@ public class GroupControllerTest {
 
         groupDto.setPosition(null);
 
-        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());
@@ -126,7 +126,7 @@ public class GroupControllerTest {
 
         groupDto.setCreatedBy(null);
 
-        mockMvc.perform(post("/api/groups/{boardId}", boardId)
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());

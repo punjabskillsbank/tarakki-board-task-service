@@ -2,7 +2,6 @@ package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.dto.TaskUpdateDTO;
-import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Task;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.TaskNotFoundException;

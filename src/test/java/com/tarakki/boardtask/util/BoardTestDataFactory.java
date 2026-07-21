@@ -31,6 +31,13 @@ public class BoardTestDataFactory {
         return dto;
     }
 
+    public static BoardDTO createBoardDTOWithId() {
+        BoardDTO dto = createBoardDTO();
+        dto.setBoardId(VALID_BOARD_ID);
+        return dto;
+    }
+
+
     public static Board createBoardEntity() {
         Board board = new Board();
         board.setBoardId(VALID_BOARD_ID);

@@ -30,6 +30,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleBoardsNotFoundException(BoardNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+<<<<<<< HEAD
 
     @ExceptionHandler(PositionAlreadyExistsException.class)
     public ResponseEntity<String> handlePositionAlreadyExistsException(PositionAlreadyExistsException ex) {
@@ -40,4 +41,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+=======
+>>>>>>> 57f4fd8 (TK_93: PATCH endpoint to edit particular task by it's and board ID)
 }

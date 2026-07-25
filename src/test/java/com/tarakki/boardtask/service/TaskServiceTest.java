@@ -165,23 +165,19 @@ public class TaskServiceTest {
     void shouldPatchTaskFieldsInServiceImpl() {
         Long taskId = 100L;
 
-        // 1. Prepare request payload containing only the modified fields
         TaskDTO incomingPatchDto = new TaskDTO();
         incomingPatchDto.setTitle("Updated Title via Patch");
         incomingPatchDto.setPosition(3);
 
-        // 2. Safely reuse your taskEntity initialized in the setUp() method
         taskEntity.setBoardId(boardId);
         taskEntity.setTitle("Original Old Title");
         taskEntity.setPosition(1);
 
-        // 3. Mock setups mapped to your repository logic (boardId first, taskId second)
         when(taskRepository.findByTaskIdAndBoardId(taskId, boardId))
                 .thenReturn(Optional.of(taskEntity));
         when(taskRepository.save(any(Task.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Mock your expected output DTO matching the factory properties
         TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
         expectedResponseDto.setBoardId(boardId);
         expectedResponseDto.setTitle("Updated Title via Patch");
@@ -190,10 +186,8 @@ public class TaskServiceTest {
         when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
                 .thenReturn(expectedResponseDto);
 
-        // 4. Execute your service method
         TaskDTO result = taskService.patchTask(boardId, taskId, incomingPatchDto);
 
-        // 5. Verification Assertions
         assertNotNull(result);
         assertEquals("Updated Title via Patch", result.getTitle());
         assertEquals(3, result.getPosition());

@@ -3,7 +3,6 @@ package com.tarakki.boardtask.service;
 import com.tarakki.boardtask.dto.TaskDTO;
 
 import java.util.List;
-import java.util.Map;
 
 public interface TaskService {
     TaskDTO createTaskByBoardId(TaskDTO taskDTO, Long boardId);

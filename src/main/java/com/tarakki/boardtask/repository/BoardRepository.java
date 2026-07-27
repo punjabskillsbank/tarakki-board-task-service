@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.repository;
 
 import com.tarakki.boardtask.entity.Board;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,10 +11,13 @@ import java.util.List;
 
 public interface BoardRepository extends JpaRepository<Board, Long> {
 
-    @Modifying
-    @Query("DELETE FROM Board b WHERE b.boardId = :boardId")
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("DELETE FROM Board b WHERE b.id = :boardId")
     int deleteBoardById(@Param("boardId") Long boardId);
+
     List<Board> findByOrgId(Long orgId);
+
 }
 
 

@@ -16,10 +16,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new HashMap<>();
-
         exception.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
-
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
@@ -31,6 +29,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BoardNotFoundException.class)
     public ResponseEntity<String> handleBoardsNotFoundException(BoardNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(PositionAlreadyExistsException.class)
+    public ResponseEntity<String> handlePositionAlreadyExistsException(PositionAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+
     }
 
     @ExceptionHandler(RuntimeException.class)

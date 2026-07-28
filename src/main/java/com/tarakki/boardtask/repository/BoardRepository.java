@@ -11,11 +11,6 @@ import java.util.List;
 
 public interface BoardRepository extends JpaRepository<Board, Long> {
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
-    @Query("DELETE FROM Board b WHERE b.id = :boardId")
-    int deleteBoardById(@Param("boardId") Long boardId);
-
     List<Board> findByOrgId(Long orgId);
 
 }

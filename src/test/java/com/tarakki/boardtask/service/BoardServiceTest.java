@@ -79,27 +79,22 @@ class BoardServiceTest {
     @Test
     void shouldDeleteBoard() {
 
-        when(boardRepository.deleteBoardById(existingBoardId))
-                .thenReturn(1);
+        doNothing().when(boardRepository).deleteById(existingBoardId);
 
         boardService.deleteBoard(existingBoardId);
 
-        verify(boardRepository).deleteBoardById(existingBoardId);
+        verify(boardRepository).deleteById(existingBoardId);
         verify(boardRepository, never()).existsById(anyLong());
-        verify(boardRepository, never()).deleteById(anyLong());
     }
 
     @Test
-    void shouldReturnZeroWhenDeletingMissingBoard() {
+    void shouldDeleteMissingBoard() {
 
-        when(boardRepository.deleteBoardById(missingBoardId))
-                .thenReturn(0);
+        doNothing().when(boardRepository).deleteById(missingBoardId);
 
         boardService.deleteBoard(missingBoardId);
 
-        verify(boardRepository).deleteBoardById(missingBoardId);
-        verify(boardRepository, never()).existsById(anyLong());
-        verify(boardRepository, never()).deleteById(anyLong());
+        verify(boardRepository).deleteById(missingBoardId);
     }
 
     @Test

@@ -34,7 +34,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     @Transactional
     public void deleteBoard(Long boardId) {
-        boardRepository.deleteBoardById(boardId);
+        boardRepository.deleteById(boardId);
     }
 
     @Override

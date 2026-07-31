@@ -159,40 +159,4 @@ public class TaskServiceTest {
         verify(taskRepository).findByBoardId(boardId);
         verify(modelMapper, never()).map(any(), any());
     }
-
-
-    @Test
-    void shouldPatchTaskFieldsInServiceImpl() {
-        Long taskId = 100L;
-
-        TaskDTO incomingPatchDto = new TaskDTO();
-        incomingPatchDto.setTitle("Updated Title via Patch");
-        incomingPatchDto.setPosition(3);
-
-        taskEntity.setBoardId(boardId);
-        taskEntity.setTitle("Original Old Title");
-        taskEntity.setPosition(1);
-
-        when(taskRepository.findByTaskIdAndBoardId(taskId, boardId))
-                .thenReturn(Optional.of(taskEntity));
-        when(taskRepository.save(any(Task.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
-        expectedResponseDto.setBoardId(boardId);
-        expectedResponseDto.setTitle("Updated Title via Patch");
-        expectedResponseDto.setPosition(3);
-
-        when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
-                .thenReturn(expectedResponseDto);
-
-        TaskDTO result = taskService.patchTask(boardId, taskId, incomingPatchDto);
-
-        assertNotNull(result);
-        assertEquals("Updated Title via Patch", result.getTitle());
-        assertEquals(3, result.getPosition());
-
-        verify(taskRepository, times(1)).findByTaskIdAndBoardId(taskId, boardId);
-        verify(taskRepository, times(1)).save(taskEntity);
-    }
 }

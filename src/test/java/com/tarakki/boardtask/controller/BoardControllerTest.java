@@ -1,8 +1,11 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.service.BoardService;
+import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
+import com.tarakki.boardtask.util.TaskTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
@@ -183,5 +186,31 @@ class BoardControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void shouldPatchTaskSuccessfully() throws Exception {
+        Long boardId = EXISTING_BOARD_ID;
+        Long taskId = 100L;
+
+        TaskDTO patchRequestDto = new TaskDTO();
+        patchRequestDto.setTitle("New Patched Title");
+        patchRequestDto.setPosition(5);
+
+        TaskDTO patchedResponseDto = TaskTestDataFactory.createTaskDto();
+        patchedResponseDto.setTitle("New Patched Title");
+        patchedResponseDto.setPosition(5);
+
+        when(boardService.patchTask(eq(boardId), eq(taskId), any(TaskDTO.class)))
+                .thenReturn(patchedResponseDto);
+
+        mockMvc.perform(patch("/api/boards/{boardId}/tasks/{taskId}", boardId, taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("New Patched Title"))
+                .andExpect(jsonPath("$.position").value(5))
+                .andExpect(jsonPath("$.groupId").value(patchedResponseDto.getGroupId()));
+    }
+
 
 }

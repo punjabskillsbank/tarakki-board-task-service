@@ -8,7 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity(name = "BoardTaskEntity")
+@Entity
 @Table(name = "boards")
 @Getter
 @Setter

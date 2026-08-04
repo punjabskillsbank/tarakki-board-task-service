@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -159,29 +158,28 @@ public class TaskServiceTest {
         verify(taskRepository).findByBoardId(boardId);
         verify(modelMapper, never()).map(any(), any());
     }
-
-
     @Test
     void shouldPatchTaskFieldsInServiceImpl() {
+        Long boardId = 1L;
         Long taskId = 100L;
 
-        // 1. Prepare request payload containing only the modified fields
         TaskDTO incomingPatchDto = new TaskDTO();
         incomingPatchDto.setTitle("Updated Title via Patch");
         incomingPatchDto.setPosition(3);
 
-        // 2. Safely reuse your taskEntity initialized in the setUp() method
+        Board board = new Board();
+        Task taskEntity = new Task();
+        taskEntity.setTaskId(taskId);
         taskEntity.setBoardId(boardId);
         taskEntity.setTitle("Original Old Title");
         taskEntity.setPosition(1);
 
-        // 3. Mock setups mapped to your repository logic (boardId first, taskId second)
-        when(taskRepository.findByTaskIdAndBoardId(taskId, boardId))
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(taskRepository.findById(taskId))
                 .thenReturn(Optional.of(taskEntity));
         when(taskRepository.save(any(Task.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Mock your expected output DTO matching the factory properties
         TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
         expectedResponseDto.setBoardId(boardId);
         expectedResponseDto.setTitle("Updated Title via Patch");
@@ -190,15 +188,14 @@ public class TaskServiceTest {
         when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
                 .thenReturn(expectedResponseDto);
 
-        // 4. Execute your service method
         TaskDTO result = taskService.patchTask(boardId, taskId, incomingPatchDto);
 
-        // 5. Verification Assertions
         assertNotNull(result);
         assertEquals("Updated Title via Patch", result.getTitle());
         assertEquals(3, result.getPosition());
 
-        verify(taskRepository, times(1)).findByTaskIdAndBoardId(taskId, boardId);
+        verify(boardRepository, times(1)).findById(boardId);
+        verify(taskRepository, times(1)).findById(taskId);
         verify(taskRepository, times(1)).save(taskEntity);
     }
 }

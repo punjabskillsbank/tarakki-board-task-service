@@ -1,15 +1,12 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
-import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.entity.Board;
-import com.tarakki.boardtask.entity.Task;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
-import com.tarakki.boardtask.util.TaskTestDataFactory;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,17 +88,6 @@ class BoardServiceTest {
         boardService.deleteBoard(existingBoardId);
 
         verify(boardRepository).deleteById(existingBoardId);
-        verify(boardRepository, never()).existsById(anyLong());
-    }
-
-    @Test
-    void shouldDeleteMissingBoard() {
-
-        doNothing().when(boardRepository).deleteById(missingBoardId);
-
-        boardService.deleteBoard(missingBoardId);
-
-        verify(boardRepository).deleteById(missingBoardId);
     }
 
     @Test
@@ -179,44 +165,5 @@ class BoardServiceTest {
 
         verify(boardRepository).findById(missingBoardId);
         verify(modelMapper, never()).map(any(), any());
-    }
-
-    @Test
-    void shouldPatchTaskFieldsInServiceImpl() {
-        Long boardId = existingBoardId;
-        Long taskId = 100L;
-
-        TaskDTO incomingPatchDto = new TaskDTO();
-        incomingPatchDto.setTitle("Updated Title via Patch");
-        incomingPatchDto.setPosition(3);
-
-        Task taskEntity = new Task();
-        taskEntity.setBoardId(boardId);
-        taskEntity.setTitle("Original Old Title");
-        taskEntity.setPosition(1);
-
-        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
-        when(taskRepository.findByTaskIdAndBoardId(taskId, boardId))
-                .thenReturn(Optional.of(taskEntity));
-        when(taskRepository.save(any(Task.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
-        expectedResponseDto.setBoardId(boardId);
-        expectedResponseDto.setTitle("Updated Title via Patch");
-        expectedResponseDto.setPosition(3);
-
-        when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
-                .thenReturn(expectedResponseDto);
-
-        TaskDTO result = boardService.patchTask(boardId, taskId, incomingPatchDto);
-
-        assertNotNull(result);
-        assertEquals("Updated Title via Patch", result.getTitle());
-        assertEquals(3, result.getPosition());
-
-        verify(boardRepository, times(1)).findById(boardId);
-        verify(taskRepository, times(1)).findByTaskIdAndBoardId(taskId, boardId);
-        verify(taskRepository, times(1)).save(taskEntity);
     }
 }

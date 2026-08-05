@@ -37,4 +37,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handlePositionAlreadyExistsException(PositionAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
+
+    @ExceptionHandler(OrgMemberNotFoundException.class)
+    public ResponseEntity<String> handleOrgMemberNotFoundException(OrgMemberNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(OrgMemberNotRegisteredException.class)
+    public ResponseEntity<String> handleOrgMemberNotRegisteredException(OrgMemberNotRegisteredException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(MemberAlreadyOnBoardException.class)
+    public ResponseEntity<String> handleMemberAlreadyOnBoardException(MemberAlreadyOnBoardException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
 }

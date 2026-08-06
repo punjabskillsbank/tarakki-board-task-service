@@ -8,13 +8,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/boardMembers")
+@RequestMapping("/api/{boardId}/boardMembers")
 @AllArgsConstructor
 public class BoardMemberController {
 
     private final BoardMemberService boardMemberService;
 
-    @PostMapping("/{boardId}/{orgMemberId}")
+    @PostMapping("/{orgMemberId}")
     public ResponseEntity<BoardMemberDTO> addMemberToBoard(@PathVariable Long boardId,
                                                            @PathVariable Long orgMemberId) {
         BoardMemberDTO result = boardMemberService.addMemberToBoard(boardId, orgMemberId);

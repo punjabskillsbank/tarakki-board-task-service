@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.dto;
 
 import com.tarakki.boardtask.enums.BoardRole;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,15 +18,20 @@ public class BoardMemberDTO {
 
     private Long boardMemberId;
 
+    @NotNull
     private Long boardId;
 
+    @NotNull
     private UUID memberId;
 
+    @NotNull
     private BoardRole role;
 
-    private boolean canEdit;
+    @NotNull
+    private Boolean canEdit;
 
-    private boolean canView;
+    @NotNull
+    private Boolean canView;
 
     private LocalDateTime createdAt;
 

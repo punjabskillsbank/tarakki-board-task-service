@@ -48,8 +48,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
-    @ExceptionHandler(MemberAlreadyOnBoardException.class)
-    public ResponseEntity<String> handleMemberAlreadyOnBoardException(MemberAlreadyOnBoardException ex) {
+    @ExceptionHandler(BoardMemberExistsException.class)
+    public ResponseEntity<String> handleBoardMemberExistsException(BoardMemberExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(OrgServiceUnavailableException.class)
+    public ResponseEntity<String> handleOrgServiceUnavailableException(OrgServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ex.getMessage());
     }
 }

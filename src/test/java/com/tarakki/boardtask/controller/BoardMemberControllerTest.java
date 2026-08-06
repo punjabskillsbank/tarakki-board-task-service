@@ -1,10 +1,11 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardMemberDTO;
+import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
-import com.tarakki.boardtask.exception.MemberAlreadyOnBoardException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotRegisteredException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.service.BoardMemberService;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(BoardMemberController.class)
 public class BoardMemberControllerTest {
+
+    private static final String URL = "/api/{boardId}/boardMembers/{orgMemberId}";
 
     @MockitoBean
     private BoardMemberService boardMemberService;
@@ -57,7 +60,7 @@ public class BoardMemberControllerTest {
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
                 .thenReturn(boardMemberDto);
 
-        mockMvc.perform(post("/api/boardMembers/{boardId}/{orgMemberId}", boardId, orgMemberId))
+        mockMvc.perform(post(URL, boardId, orgMemberId))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.boardMemberId").value(boardMemberDto.getBoardMemberId()))
                 .andExpect(jsonPath("$.boardId").value(boardMemberDto.getBoardId()))
@@ -73,7 +76,7 @@ public class BoardMemberControllerTest {
         when(boardMemberService.addMemberToBoard(eq(invalidBoardId), eq(orgMemberId)))
                 .thenThrow(new BoardNotFoundException(invalidBoardId));
 
-        mockMvc.perform(post("/api/boardMembers/{boardId}/{orgMemberId}", invalidBoardId, orgMemberId))
+        mockMvc.perform(post(URL, invalidBoardId, orgMemberId))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board not found with id: " + invalidBoardId));
@@ -85,7 +88,7 @@ public class BoardMemberControllerTest {
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(invalidOrgMemberId)))
                 .thenThrow(new OrgMemberNotFoundException(invalidOrgMemberId, orgId));
 
-        mockMvc.perform(post("/api/boardMembers/{boardId}/{orgMemberId}", boardId, invalidOrgMemberId))
+        mockMvc.perform(post(URL, boardId, invalidOrgMemberId))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Org member " + invalidOrgMemberId + " not found in organization " + orgId));
@@ -97,7 +100,7 @@ public class BoardMemberControllerTest {
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
                 .thenThrow(new OrgMemberNotRegisteredException(orgMemberId));
 
-        mockMvc.perform(post("/api/boardMembers/{boardId}/{orgMemberId}", boardId, orgMemberId))
+        mockMvc.perform(post(URL, boardId, orgMemberId))
                 .andExpect(status().isConflict())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Org member " + orgMemberId + " has no registered account yet"));
@@ -107,11 +110,23 @@ public class BoardMemberControllerTest {
     void shouldReturnConflictWhenMemberIsAlreadyOnBoard() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
-                .thenThrow(new MemberAlreadyOnBoardException(memberId, boardId));
+                .thenThrow(new BoardMemberExistsException(memberId, boardId));
 
-        mockMvc.perform(post("/api/boardMembers/{boardId}/{orgMemberId}", boardId, orgMemberId))
+        mockMvc.perform(post(URL, boardId, orgMemberId))
                 .andExpect(status().isConflict())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Member " + memberId + " is already a member of board " + boardId));
+    }
+
+    @Test
+    void shouldReturnServiceUnavailableWhenOrganizationServiceIsUnreachable() throws Exception {
+
+        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
+                .thenThrow(new OrgServiceUnavailableException(orgId));
+
+        mockMvc.perform(post(URL, boardId, orgMemberId))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Unable to reach organization service to look up members of organization " + orgId));
     }
 }

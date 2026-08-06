@@ -1,22 +1,26 @@
 package com.tarakki.boardtask.serviceImpl;
 
+import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
+import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
+import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
-import com.tarakki.boardtask.exception.MemberAlreadyOnBoardException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotRegisteredException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
-import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.service.BoardMemberService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -25,7 +29,7 @@ public class BoardMemberServiceImpl implements BoardMemberService {
 
     private final BoardMemberRepository boardMemberRepository;
     private final BoardRepository boardRepository;
-    private final OrganizationRepository organizationRepository;
+    private final OrgMemberClient orgMemberClient;
     private final ModelMapper modelMapper;
 
     @Override
@@ -37,15 +41,17 @@ public class BoardMemberServiceImpl implements BoardMemberService {
 
         Long orgId = board.getOrgId();
 
-        if (!organizationRepository.existsOrgMemberInOrganization(orgMemberId, orgId)) {
-            throw new OrgMemberNotFoundException(orgMemberId, orgId);
+        OrgMemberDTO orgMember = findOrgMember(orgId, orgMemberId)
+                .orElseThrow(() -> new OrgMemberNotFoundException(orgMemberId, orgId));
+
+        UUID memberId = orgMember.getMemberId();
+
+        if (memberId == null) {
+            throw new OrgMemberNotRegisteredException(orgMemberId);
         }
 
-        UUID memberId = organizationRepository.findMemberIdByOrgMemberIdAndOrgId(orgMemberId, orgId)
-                .orElseThrow(() -> new OrgMemberNotRegisteredException(orgMemberId));
-
         if (isAlreadyOnBoard(boardId, memberId)) {
-            throw new MemberAlreadyOnBoardException(memberId, boardId);
+            throw new BoardMemberExistsException(memberId, boardId);
         }
 
         BoardMember boardMember = BoardMember.builder()
@@ -59,6 +65,14 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         BoardMember savedBoardMember = boardMemberRepository.save(boardMember);
 
         return modelMapper.map(savedBoardMember, BoardMemberDTO.class);
+    }
+
+    private Optional<OrgMemberDTO> findOrgMember(Long orgId, Long orgMemberId) {
+        try {
+            return orgMemberClient.findOrgMemberById(orgId, orgMemberId);
+        } catch (RestClientException exception) {
+            throw new OrgServiceUnavailableException(orgId);
+        }
     }
 
     private boolean isAlreadyOnBoard(Long boardId, UUID memberId) {

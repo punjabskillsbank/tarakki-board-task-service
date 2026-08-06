@@ -1,16 +1,18 @@
 package com.tarakki.boardtask.service;
 
+import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
+import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
+import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
-import com.tarakki.boardtask.exception.MemberAlreadyOnBoardException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotRegisteredException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
-import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.serviceImpl.BoardMemberServiceImpl;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
@@ -23,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.web.client.RestClientException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -43,7 +46,7 @@ public class BoardMemberServiceTest {
     private BoardRepository boardRepository;
 
     @Mock
-    private OrganizationRepository organizationRepository;
+    private OrgMemberClient orgMemberClient;
 
     @Mock
     private ModelMapper modelMapper;
@@ -57,6 +60,7 @@ public class BoardMemberServiceTest {
     private Board board;
     private BoardMember boardMemberEntity;
     private BoardMemberDTO boardMemberDTO;
+    private OrgMemberDTO orgMemberDTO;
     private Long boardId;
     private Long invalidBoardId;
     private Long orgId;
@@ -69,6 +73,7 @@ public class BoardMemberServiceTest {
         board = BoardTestDataFactory.createBoardEntity();
         boardMemberEntity = BoardMemberTestDataFactory.createBoardMemberEntity();
         boardMemberDTO = BoardMemberTestDataFactory.createBoardMemberDto();
+        orgMemberDTO = BoardMemberTestDataFactory.createOrgMemberDto();
         boardId = BoardMemberTestDataFactory.BOARD_ID;
         invalidBoardId = BoardMemberTestDataFactory.INVALID_BOARD_ID;
         orgId = BoardMemberTestDataFactory.ORG_ID;
@@ -83,11 +88,8 @@ public class BoardMemberServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
 
-        when(organizationRepository.existsOrgMemberInOrganization(orgMemberId, orgId))
-                .thenReturn(true);
-
-        when(organizationRepository.findMemberIdByOrgMemberIdAndOrgId(orgMemberId, orgId))
-                .thenReturn(Optional.of(memberId));
+        when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
+                .thenReturn(Optional.of(orgMemberDTO));
 
         when(boardMemberRepository.existsByBoardIdAndMemberId(boardId, memberId))
                 .thenReturn(false);
@@ -106,8 +108,7 @@ public class BoardMemberServiceTest {
         assertEquals(boardMemberDTO.getRole(), result.getRole());
 
         verify(boardRepository).findById(boardId);
-        verify(organizationRepository).existsOrgMemberInOrganization(orgMemberId, orgId);
-        verify(organizationRepository).findMemberIdByOrgMemberIdAndOrgId(orgMemberId, orgId);
+        verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
         verify(boardMemberRepository).existsByBoardIdAndMemberId(boardId, memberId);
         verify(boardMemberRepository).save(boardMemberCaptor.capture());
         verify(modelMapper).map(any(BoardMember.class), eq(BoardMemberDTO.class));
@@ -133,8 +134,7 @@ public class BoardMemberServiceTest {
         assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
 
         verify(boardRepository).findById(invalidBoardId);
-        verify(organizationRepository, never()).existsOrgMemberInOrganization(anyLong(), anyLong());
-        verify(organizationRepository, never()).findMemberIdByOrgMemberIdAndOrgId(anyLong(), anyLong());
+        verify(orgMemberClient, never()).findOrgMemberById(anyLong(), anyLong());
         verify(boardMemberRepository, never()).existsByBoardIdAndMemberId(anyLong(), any(UUID.class));
         verify(boardMemberRepository, never()).save(any(BoardMember.class));
         verify(modelMapper, never()).map(any(), any());
@@ -146,8 +146,8 @@ public class BoardMemberServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
 
-        when(organizationRepository.existsOrgMemberInOrganization(invalidOrgMemberId, orgId))
-                .thenReturn(false);
+        when(orgMemberClient.findOrgMemberById(orgId, invalidOrgMemberId))
+                .thenReturn(Optional.empty());
 
         OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, invalidOrgMemberId)
@@ -157,8 +157,7 @@ public class BoardMemberServiceTest {
                 exception.getMessage());
 
         verify(boardRepository).findById(boardId);
-        verify(organizationRepository).existsOrgMemberInOrganization(invalidOrgMemberId, orgId);
-        verify(organizationRepository, never()).findMemberIdByOrgMemberIdAndOrgId(anyLong(), anyLong());
+        verify(orgMemberClient).findOrgMemberById(orgId, invalidOrgMemberId);
         verify(boardMemberRepository, never()).existsByBoardIdAndMemberId(anyLong(), any(UUID.class));
         verify(boardMemberRepository, never()).save(any(BoardMember.class));
         verify(modelMapper, never()).map(any(), any());
@@ -170,11 +169,8 @@ public class BoardMemberServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
 
-        when(organizationRepository.existsOrgMemberInOrganization(orgMemberId, orgId))
-                .thenReturn(true);
-
-        when(organizationRepository.findMemberIdByOrgMemberIdAndOrgId(orgMemberId, orgId))
-                .thenReturn(Optional.empty());
+        when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
+                .thenReturn(Optional.of(BoardMemberTestDataFactory.createUnregisteredOrgMemberDto()));
 
         OrgMemberNotRegisteredException exception = assertThrows(OrgMemberNotRegisteredException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
@@ -184,29 +180,25 @@ public class BoardMemberServiceTest {
                 exception.getMessage());
 
         verify(boardRepository).findById(boardId);
-        verify(organizationRepository).existsOrgMemberInOrganization(orgMemberId, orgId);
-        verify(organizationRepository).findMemberIdByOrgMemberIdAndOrgId(orgMemberId, orgId);
+        verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
         verify(boardMemberRepository, never()).existsByBoardIdAndMemberId(anyLong(), any(UUID.class));
         verify(boardMemberRepository, never()).save(any(BoardMember.class));
         verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
-    void addMemberToBoard_shouldThrowMemberAlreadyOnBoardExceptionWhenMemberIsAlreadyOnBoard() {
+    void addMemberToBoard_shouldThrowBoardMemberExistsExceptionWhenMemberIsAlreadyOnBoard() {
 
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
 
-        when(organizationRepository.existsOrgMemberInOrganization(orgMemberId, orgId))
-                .thenReturn(true);
-
-        when(organizationRepository.findMemberIdByOrgMemberIdAndOrgId(orgMemberId, orgId))
-                .thenReturn(Optional.of(memberId));
+        when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
+                .thenReturn(Optional.of(orgMemberDTO));
 
         when(boardMemberRepository.existsByBoardIdAndMemberId(boardId, memberId))
                 .thenReturn(true);
 
-        MemberAlreadyOnBoardException exception = assertThrows(MemberAlreadyOnBoardException.class,
+        BoardMemberExistsException exception = assertThrows(BoardMemberExistsException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
         );
 
@@ -214,9 +206,31 @@ public class BoardMemberServiceTest {
                 exception.getMessage());
 
         verify(boardRepository).findById(boardId);
-        verify(organizationRepository).existsOrgMemberInOrganization(orgMemberId, orgId);
-        verify(organizationRepository).findMemberIdByOrgMemberIdAndOrgId(orgMemberId, orgId);
+        verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
         verify(boardMemberRepository).existsByBoardIdAndMemberId(boardId, memberId);
+        verify(boardMemberRepository, never()).save(any(BoardMember.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void addMemberToBoard_shouldThrowOrgServiceUnavailableExceptionWhenOrganizationServiceIsUnreachable() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+
+        when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
+                .thenThrow(new RestClientException("Connection refused"));
+
+        OrgServiceUnavailableException exception = assertThrows(OrgServiceUnavailableException.class,
+                () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
+        );
+
+        assertEquals("Unable to reach organization service to look up members of organization " + orgId,
+                exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
+        verify(boardMemberRepository, never()).existsByBoardIdAndMemberId(anyLong(), any(UUID.class));
         verify(boardMemberRepository, never()).save(any(BoardMember.class));
         verify(modelMapper, never()).map(any(), any());
     }

@@ -3,6 +3,7 @@ package com.tarakki.boardtask.exceptions;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.GlobalExceptionHandler;
+import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,4 +86,15 @@ class GlobalExceptionHandlerTest {
         assertEquals("Board not found with id: " + testBoardId, response.getBody());
     }
 
+    @Test
+    void shouldHandleTaskNotFoundException() {
+        Long taskId = 999L;
+        TaskNotFoundException ex = new TaskNotFoundException(taskId);
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+        ResponseEntity<String> response = handler.handleTaskNotFoundException(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("Task not found with id: " + taskId, response.getBody());
+    }
 }

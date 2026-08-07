@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class TaskServiceTest {
@@ -160,4 +161,46 @@ public class TaskServiceTest {
         verify(taskRepository).findByBoardId(boardId);
         verify(modelMapper, never()).map(any(), any());
     }
+
+    @Test
+    void shouldPatchTaskFieldsInServiceImpl() {
+        Long boardId = 1L;
+        Long taskId = 100L;
+
+        TaskDTO incomingPatchDto = new TaskDTO();
+        incomingPatchDto.setTitle("Updated Title via Patch");
+        incomingPatchDto.setPosition(3);
+
+        Board board = new Board();
+        Task taskEntity = new Task();
+        taskEntity.setTaskId(taskId);
+        taskEntity.setBoardId(boardId);
+        taskEntity.setTitle("Original Old Title");
+        taskEntity.setPosition(1);
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(taskRepository.findById(taskId))
+                .thenReturn(Optional.of(taskEntity));
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
+        expectedResponseDto.setBoardId(boardId);
+        expectedResponseDto.setTitle("Updated Title via Patch");
+        expectedResponseDto.setPosition(3);
+
+        when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
+                .thenReturn(expectedResponseDto);
+
+        TaskDTO result = taskService.patchTask(boardId, taskId, incomingPatchDto);
+
+        assertNotNull(result);
+        assertEquals("Updated Title via Patch", result.getTitle());
+        assertEquals(3, result.getPosition());
+
+        verify(boardRepository, times(1)).findById(boardId);
+        verify(taskRepository, times(1)).findById(taskId);
+        verify(taskRepository, times(1)).save(taskEntity);
+    }
+
 }

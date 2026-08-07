@@ -1,22 +1,23 @@
 package com.tarakki.boardtask.client;
 
-import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
+import com.tarakki.common.dto.OrgMemberDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -46,6 +47,8 @@ public class OrgMemberClientTest {
     @BeforeEach
     void setUp() {
         orgMemberClient = new OrgMemberClient(orgServiceRestClient);
+        ReflectionTestUtils.setField(orgMemberClient, "orgApiEndpoint",
+                BoardMemberTestDataFactory.ORG_API_ENDPOINT);
         orgId = BoardMemberTestDataFactory.ORG_ID;
         orgMemberId = BoardMemberTestDataFactory.ORG_MEMBER_ID;
         orgMemberDto = BoardMemberTestDataFactory.createOrgMemberDto();
@@ -54,7 +57,7 @@ public class OrgMemberClientTest {
     private void stubRestClientChain() {
         doReturn(requestHeadersUriSpec).when(orgServiceRestClient).get();
         doReturn(requestHeadersSpec).when(requestHeadersUriSpec)
-                .uri(eq("/api/organizations/{orgId}/members"), eq(orgId));
+                .uri(eq(BoardMemberTestDataFactory.ORG_API_ENDPOINT + "/{orgId}/members"), eq(orgId));
         doReturn(responseSpec).when(requestHeadersSpec).retrieve();
     }
 
@@ -65,36 +68,36 @@ public class OrgMemberClientTest {
         when(responseSpec.body(any(ParameterizedTypeReference.class)))
                 .thenReturn(List.of(orgMemberDto));
 
-        Optional<OrgMemberDTO> result = orgMemberClient.findOrgMemberById(orgId, orgMemberId);
+        OrgMemberDTO result = orgMemberClient.findOrgMemberById(orgId, orgMemberId);
 
-        assertTrue(result.isPresent());
-        assertEquals(orgMemberId, result.get().getOrgMemberId());
-        assertEquals(BoardMemberTestDataFactory.MEMBER_ID, result.get().getMemberId());
+        assertNotNull(result);
+        assertEquals(orgMemberId, result.getOrgMemberId());
+        assertEquals(BoardMemberTestDataFactory.MEMBER_ID, result.getMemberId());
     }
 
     @Test
-    void findOrgMemberById_shouldReturnEmptyWhenOrgMemberIdIsNotInTheOrganization() {
+    void findOrgMemberById_shouldReturnNullWhenOrgMemberIdIsNotInTheOrganization() {
 
         stubRestClientChain();
         when(responseSpec.body(any(ParameterizedTypeReference.class)))
                 .thenReturn(List.of(orgMemberDto));
 
-        Optional<OrgMemberDTO> result = orgMemberClient
+        OrgMemberDTO result = orgMemberClient
                 .findOrgMemberById(orgId, BoardMemberTestDataFactory.INVALID_ORG_MEMBER_ID);
 
-        assertTrue(result.isEmpty());
+        assertNull(result);
     }
 
     @Test
-    void findOrgMemberById_shouldReturnEmptyWhenOrganizationHasNoMembers() {
+    void findOrgMemberById_shouldReturnNullWhenOrganizationHasNoMembers() {
 
         stubRestClientChain();
         when(responseSpec.body(any(ParameterizedTypeReference.class)))
                 .thenReturn(List.of());
 
-        Optional<OrgMemberDTO> result = orgMemberClient.findOrgMemberById(orgId, orgMemberId);
+        OrgMemberDTO result = orgMemberClient.findOrgMemberById(orgId, orgMemberId);
 
-        assertTrue(result.isEmpty());
+        assertNull(result);
     }
 
     @Test

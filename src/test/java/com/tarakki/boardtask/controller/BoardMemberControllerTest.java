@@ -95,13 +95,13 @@ public class BoardMemberControllerTest {
     }
 
     @Test
-    void shouldReturnConflictWhenOrgMemberHasNoRegisteredAccount() throws Exception {
+    void shouldReturnNotFoundWhenOrgMemberHasNoRegisteredAccount() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
                 .thenThrow(new OrgMemberNotRegisteredException(orgMemberId));
 
         mockMvc.perform(post(URL, boardId, orgMemberId))
-                .andExpect(status().isConflict())
+                .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Org member " + orgMemberId + " has no registered account yet"));
     }

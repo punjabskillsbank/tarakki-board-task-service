@@ -2,7 +2,6 @@ package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
@@ -16,6 +15,7 @@ import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.serviceImpl.BoardMemberServiceImpl;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
+import com.tarakki.common.dto.OrgMemberDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +55,7 @@ public class BoardMemberServiceTest {
     private BoardMemberServiceImpl boardMemberService;
 
     @Captor
-    private ArgumentCaptor<BoardMember> boardMemberCaptor;
+    private ArgumentCaptor<BoardMemberDTO> boardMemberDtoCaptor;
 
     private Board board;
     private BoardMember boardMemberEntity;
@@ -89,10 +89,13 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
-                .thenReturn(Optional.of(orgMemberDTO));
+                .thenReturn(orgMemberDTO);
 
         when(boardMemberRepository.existsByBoardIdAndMemberId(boardId, memberId))
                 .thenReturn(false);
+
+        when(modelMapper.map(any(BoardMemberDTO.class), eq(BoardMember.class)))
+                .thenReturn(boardMemberEntity);
 
         when(boardMemberRepository.save(any(BoardMember.class)))
                 .thenReturn(boardMemberEntity);
@@ -110,15 +113,16 @@ public class BoardMemberServiceTest {
         verify(boardRepository).findById(boardId);
         verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
         verify(boardMemberRepository).existsByBoardIdAndMemberId(boardId, memberId);
-        verify(boardMemberRepository).save(boardMemberCaptor.capture());
+        verify(modelMapper).map(boardMemberDtoCaptor.capture(), eq(BoardMember.class));
+        verify(boardMemberRepository).save(any(BoardMember.class));
         verify(modelMapper).map(any(BoardMember.class), eq(BoardMemberDTO.class));
 
-        BoardMember savedBoardMember = boardMemberCaptor.getValue();
-        assertEquals(boardId, savedBoardMember.getBoardId());
-        assertEquals(memberId, savedBoardMember.getMemberId());
-        assertEquals(BoardRole.MEMBER, savedBoardMember.getRole());
-        assertFalse(savedBoardMember.isCanEdit());
-        assertTrue(savedBoardMember.isCanView());
+        BoardMemberDTO mappedBoardMember = boardMemberDtoCaptor.getValue();
+        assertEquals(boardId, mappedBoardMember.getBoardId());
+        assertEquals(memberId, mappedBoardMember.getMemberId());
+        assertEquals(BoardRole.MEMBER, mappedBoardMember.getRole());
+        assertFalse(mappedBoardMember.getCanEdit());
+        assertTrue(mappedBoardMember.getCanView());
     }
 
     @Test
@@ -147,7 +151,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, invalidOrgMemberId))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
 
         OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, invalidOrgMemberId)
@@ -170,7 +174,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
-                .thenReturn(Optional.of(BoardMemberTestDataFactory.createUnregisteredOrgMemberDto()));
+                .thenReturn(BoardMemberTestDataFactory.createUnregisteredOrgMemberDto());
 
         OrgMemberNotRegisteredException exception = assertThrows(OrgMemberNotRegisteredException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
@@ -193,7 +197,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
-                .thenReturn(Optional.of(orgMemberDTO));
+                .thenReturn(orgMemberDTO);
 
         when(boardMemberRepository.existsByBoardIdAndMemberId(boardId, memberId))
                 .thenReturn(true);

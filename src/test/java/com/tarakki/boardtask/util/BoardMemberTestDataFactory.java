@@ -1,9 +1,9 @@
 package com.tarakki.boardtask.util;
 
 import com.tarakki.boardtask.dto.BoardMemberDTO;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
+import com.tarakki.common.dto.OrgMemberDTO;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,6 +17,7 @@ public class BoardMemberTestDataFactory {
     public static final Long INVALID_ORG_MEMBER_ID = 888L;
     public static final UUID MEMBER_ID = UUID.randomUUID();
     public static final String EMAIL = "teammate@tickmark.io";
+    public static final String ORG_API_ENDPOINT = "/api/organizations";
     public static final BoardRole ROLE = BoardRole.MEMBER;
     public static final Boolean CAN_EDIT = false;
     public static final Boolean CAN_VIEW = true;

@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OrgMemberNotRegisteredException.class)
     public ResponseEntity<String> handleOrgMemberNotRegisteredException(OrgMemberNotRegisteredException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
     @ExceptionHandler(BoardMemberExistsException.class)

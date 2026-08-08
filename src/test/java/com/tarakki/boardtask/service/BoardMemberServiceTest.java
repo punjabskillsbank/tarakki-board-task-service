@@ -2,6 +2,7 @@ package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
+import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
@@ -15,7 +16,6 @@ import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.serviceImpl.BoardMemberServiceImpl;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
-import com.tarakki.common.dto.OrgMemberDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

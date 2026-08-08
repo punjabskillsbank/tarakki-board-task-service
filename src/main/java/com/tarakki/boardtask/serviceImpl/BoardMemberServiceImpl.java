@@ -2,6 +2,7 @@ package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
+import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
@@ -13,7 +14,6 @@ import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.service.BoardMemberService;
-import com.tarakki.common.dto.OrgMemberDTO;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;

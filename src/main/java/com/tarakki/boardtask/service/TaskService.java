@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 
 import java.util.List;
 
@@ -9,5 +10,5 @@ public interface TaskService {
 
     List<TaskDTO> getTasksByBoardId(Long boardId);
 
-    TaskDTO patchTask(Long boardId, Long taskId, TaskDTO taskDTO);
+    TaskDTO patchTaskById(Long boardId, Long taskId, TaskUpdateDTO taskUpdateDTO);
 }

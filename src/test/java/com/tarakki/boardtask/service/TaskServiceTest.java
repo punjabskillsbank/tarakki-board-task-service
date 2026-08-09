@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
@@ -167,7 +168,7 @@ public class TaskServiceTest {
         Long boardId = 1L;
         Long taskId = 100L;
 
-        TaskDTO incomingPatchDto = new TaskDTO();
+        TaskUpdateDTO incomingPatchDto = new TaskUpdateDTO();
         incomingPatchDto.setTitle("Updated Title via Patch");
         incomingPatchDto.setPosition(3);
 
@@ -186,13 +187,14 @@ public class TaskServiceTest {
 
         TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
         expectedResponseDto.setBoardId(boardId);
+        expectedResponseDto.setTaskId(taskId);
         expectedResponseDto.setTitle("Updated Title via Patch");
         expectedResponseDto.setPosition(3);
 
         when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
                 .thenReturn(expectedResponseDto);
 
-        TaskDTO result = taskService.patchTask(boardId, taskId, incomingPatchDto);
+        TaskDTO result = taskService.patchTaskById(boardId, taskId, incomingPatchDto);
 
         assertNotNull(result);
         assertEquals("Updated Title via Patch", result.getTitle());

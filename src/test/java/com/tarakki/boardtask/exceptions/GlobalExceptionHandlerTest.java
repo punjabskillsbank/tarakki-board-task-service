@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -84,17 +85,5 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals("Board not found with id: " + testBoardId, response.getBody());
-    }
-
-    @Test
-    void shouldHandleTaskNotFoundException() {
-        Long taskId = 999L;
-        TaskNotFoundException ex = new TaskNotFoundException(taskId);
-
-        GlobalExceptionHandler handler = new GlobalExceptionHandler();
-        ResponseEntity<String> response = handler.handleTaskNotFoundException(ex);
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Task not found with id: " + taskId, response.getBody());
     }
 }

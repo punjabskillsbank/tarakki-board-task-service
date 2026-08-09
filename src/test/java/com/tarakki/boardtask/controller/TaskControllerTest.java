@@ -1,7 +1,9 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -146,17 +148,20 @@ public class TaskControllerTest {
 
     @Test
     void shouldPatchTaskSuccessfully() throws Exception {
+        Long boardId = 1L;
         Long taskId = 100L;
 
-        TaskDTO patchRequestDto = new TaskDTO();
+        TaskUpdateDTO patchRequestDto = new TaskUpdateDTO();
         patchRequestDto.setTitle("New Patched Title");
         patchRequestDto.setPosition(5);
 
         TaskDTO patchedResponseDto = TaskTestDataFactory.createTaskDto();
+        patchedResponseDto.setBoardId(boardId);
+        patchedResponseDto.setTaskId(taskId);
         patchedResponseDto.setTitle("New Patched Title");
         patchedResponseDto.setPosition(5);
 
-        when(taskService.patchTask(eq(boardId), eq(taskId), any(TaskDTO.class)))
+        when(taskService.patchTaskById(eq(boardId), eq(taskId), any(TaskUpdateDTO.class)))
                 .thenReturn(patchedResponseDto);
 
         mockMvc.perform(patch("/api/{boardId}/task/{taskId}", boardId, taskId)
@@ -166,5 +171,22 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.title").value("New Patched Title"))
                 .andExpect(jsonPath("$.position").value(5))
                 .andExpect(jsonPath("$.groupId").value(patchedResponseDto.getGroupId()));
+    }
+
+    @Test
+    void shouldHandleTaskNotFoundException() throws Exception {
+        Long boardId = 1L;
+        Long taskId = 999L;
+
+        TaskUpdateDTO patchRequestDto = new TaskUpdateDTO();
+        patchRequestDto.setTitle("Updated Title");
+
+        when(taskService.patchTaskById(eq(boardId), eq(taskId), any(TaskUpdateDTO.class)))
+                .thenThrow(new TaskNotFoundException(taskId));
+
+        mockMvc.perform(patch("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequestDto)))
+                .andExpect(status().isNotFound());
     }
 }

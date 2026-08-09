@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -29,12 +30,12 @@ public class TaskController {
     }
 
     @PatchMapping("/{taskId}")
-    public ResponseEntity<TaskDTO> patchTask(
+    public ResponseEntity<TaskDTO> patchTaskById(
             @PathVariable Long boardId,
             @PathVariable Long taskId,
-            @RequestBody TaskDTO taskDTO) {
+            @RequestBody TaskUpdateDTO taskUpdateDTO) {
 
-        TaskDTO updatedTask = taskService.patchTask(boardId, taskId, taskDTO);
+        TaskDTO updatedTask = taskService.patchTaskById(boardId, taskId, taskUpdateDTO);
         return ResponseEntity.ok(updatedTask);
     }
 }

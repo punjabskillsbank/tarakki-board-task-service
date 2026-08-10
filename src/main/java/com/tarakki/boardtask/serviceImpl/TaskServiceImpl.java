@@ -57,9 +57,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
-        task.setTitle(taskUpdateDTO.getTitle());
-        task.setPosition(taskUpdateDTO.getPosition());
-        task.setGroupId(taskUpdateDTO.getGroupId());
+        modelMapper.map(taskUpdateDTO, task);
 
         Task updatedTask = taskRepository.save(task);
         return modelMapper.map(updatedTask, TaskDTO.class);

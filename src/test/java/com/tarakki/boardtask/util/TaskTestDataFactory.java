@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.util;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.entity.Task;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,14 @@ public class TaskTestDataFactory {
         taskDTO.setCreatedAt(CREATED_AT);
         taskDTO.setUpdatedAt(UPDATED_AT);
         return taskDTO;
+    }
+
+    public static TaskUpdateDTO createTaskUpdateDto() {
+        TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO();
+        taskUpdateDTO.setTitle(TITLE);
+        taskUpdateDTO.setPosition(POSITION);
+        taskUpdateDTO.setGroupId(GROUP_ID);
+        return taskUpdateDTO;
     }
 
     public static Task createTaskEntity() {

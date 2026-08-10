@@ -148,18 +148,9 @@ public class TaskControllerTest {
 
     @Test
     void shouldPatchTaskSuccessfully() throws Exception {
-        Long boardId = 1L;
-        Long taskId = 100L;
-
-        TaskUpdateDTO patchRequestDto = new TaskUpdateDTO();
-        patchRequestDto.setTitle("New Patched Title");
-        patchRequestDto.setPosition(5);
-
+        Long taskId = TaskTestDataFactory.TASK_ID;
+        TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
         TaskDTO patchedResponseDto = TaskTestDataFactory.createTaskDto();
-        patchedResponseDto.setBoardId(boardId);
-        patchedResponseDto.setTaskId(taskId);
-        patchedResponseDto.setTitle("New Patched Title");
-        patchedResponseDto.setPosition(5);
 
         when(taskService.patchTaskById(eq(boardId), eq(taskId), any(TaskUpdateDTO.class)))
                 .thenReturn(patchedResponseDto);
@@ -168,18 +159,15 @@ public class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patchRequestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("New Patched Title"))
-                .andExpect(jsonPath("$.position").value(5))
+                .andExpect(jsonPath("$.title").value(patchedResponseDto.getTitle()))
+                .andExpect(jsonPath("$.position").value(patchedResponseDto.getPosition()))
                 .andExpect(jsonPath("$.groupId").value(patchedResponseDto.getGroupId()));
     }
 
     @Test
     void shouldHandleTaskNotFoundException() throws Exception {
-        Long boardId = 1L;
-        Long taskId = 999L;
-
-        TaskUpdateDTO patchRequestDto = new TaskUpdateDTO();
-        patchRequestDto.setTitle("Updated Title");
+        Long taskId = TaskTestDataFactory.TASK_ID;
+        TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
 
         when(taskService.patchTaskById(eq(boardId), eq(taskId), any(TaskUpdateDTO.class)))
                 .thenThrow(new TaskNotFoundException(taskId));

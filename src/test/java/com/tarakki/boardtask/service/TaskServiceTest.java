@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -165,19 +166,12 @@ public class TaskServiceTest {
 
     @Test
     void shouldPatchTaskFieldsInServiceImpl() {
-        Long boardId = 1L;
-        Long taskId = 100L;
+        Long boardId = TaskTestDataFactory.BOARD_ID;
+        Long taskId = TaskTestDataFactory.TASK_ID;
 
-        TaskUpdateDTO incomingPatchDto = new TaskUpdateDTO();
-        incomingPatchDto.setTitle("Updated Title via Patch");
-        incomingPatchDto.setPosition(3);
-
-        Board board = new Board();
-        Task taskEntity = new Task();
+        TaskUpdateDTO incomingPatchDto = TaskTestDataFactory.createTaskUpdateDto();
+        Task taskEntity = TaskTestDataFactory.createTaskEntity();
         taskEntity.setTaskId(taskId);
-        taskEntity.setBoardId(boardId);
-        taskEntity.setTitle("Original Old Title");
-        taskEntity.setPosition(1);
 
         when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
         when(taskRepository.findById(taskId))
@@ -186,22 +180,20 @@ public class TaskServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
-        expectedResponseDto.setBoardId(boardId);
-        expectedResponseDto.setTaskId(taskId);
-        expectedResponseDto.setTitle("Updated Title via Patch");
-        expectedResponseDto.setPosition(3);
 
+        doNothing().when(modelMapper).map(any(TaskUpdateDTO.class), any(Task.class));
         when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
                 .thenReturn(expectedResponseDto);
 
         TaskDTO result = taskService.patchTaskById(boardId, taskId, incomingPatchDto);
 
         assertNotNull(result);
-        assertEquals("Updated Title via Patch", result.getTitle());
-        assertEquals(3, result.getPosition());
+        assertEquals(expectedResponseDto.getTitle(), result.getTitle());
+        assertEquals(expectedResponseDto.getPosition(), result.getPosition());
 
         verify(boardRepository, times(1)).findById(boardId);
         verify(taskRepository, times(1)).findById(taskId);
+        verify(modelMapper, times(1)).map(incomingPatchDto, taskEntity);
         verify(taskRepository, times(1)).save(taskEntity);
     }
 

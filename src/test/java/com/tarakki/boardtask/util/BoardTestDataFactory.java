@@ -9,6 +9,11 @@ public class BoardTestDataFactory {
 
     public static final Long EXISTING_BOARD_ID = 1L;
     public static final Long MISSING_BOARD_ID = 99L;
+    public static final Long AUDIT_BOARD_ID = 123L;
+    public static final Long AUDIT_BOARD_ID_ALT = 456L;
+    public static final String AUDIT_BOARD_NAME = "My Board";
+    public static final String AUDIT_BOARD_DESCRIPTION = "Description";
+    public static final String AUDIT_BOARD_NAME_ALT = "Integration Board";
 
     public static Long createExistingBoardId() {
         return EXISTING_BOARD_ID;
@@ -43,5 +48,19 @@ public class BoardTestDataFactory {
 
     public static Board createBoard() {
         return createBoardEntity();
+    }
+
+    public static Board createAuditBoard(Long boardId) {
+        Board board = createBoardEntity();
+        board.setBoardId(boardId);
+        board.setBoardName(AUDIT_BOARD_NAME);
+        board.setBoardDesc(AUDIT_BOARD_DESCRIPTION);
+        return board;
+    }
+
+    public static Board createAlternateAuditBoard(Long boardId) {
+        Board board = createAuditBoard(boardId);
+        board.setBoardName(AUDIT_BOARD_NAME_ALT);
+        return board;
     }
 }

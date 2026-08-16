@@ -2,7 +2,7 @@ package com.tarakki.boardtask.aspect;
 
 import tools.jackson.databind.ObjectMapper;
 import com.tarakki.boardtask.entity.Board;
-import com.tarakki.boardtask.kafka.AuditEventMessage;
+import com.tarakki.boardtask.event.AuditEventMessage;
 import com.tarakki.boardtask.kafka.AuditKafkaProducer;
 import com.tarakki.boardtask.repository.BoardRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @Aspect
 @Component
@@ -35,9 +34,9 @@ public class AuditLoggingAspect {
     @Around("execution(* com.tarakki.boardtask.controller.BoardController.deleteBoard(..)) && args(boardId)")
     public Object logBoardDeletion(ProceedingJoinPoint joinPoint, Long boardId) throws Throwable {
         String oldValue = null;
-        Optional<Board> existingBoard = boardRepository.findById(boardId);
-        if (existingBoard.isPresent()) {
-            oldValue = objectMapper.writeValueAsString(existingBoard.get());
+        Board existingBoard = boardRepository.findById(boardId).orElse(null);
+        if (existingBoard != null) {
+            oldValue = objectMapper.writeValueAsString(existingBoard);
         }
 
         String performedBy = resolvePerformedBy();

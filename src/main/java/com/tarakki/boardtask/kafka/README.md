@@ -29,7 +29,8 @@ Kafka
 
 └─ Broker (localhost:9092) → Topics
 
-The application connects to `localhost:9092`. The controller uses `localhost:9093`.
+The Spring Boot application connects to the Kafka broker at localhost:9092.
+The REST API is exposed on localhost:8080.
 
 ## 4. First-Time Setup vs Daily Setup
 

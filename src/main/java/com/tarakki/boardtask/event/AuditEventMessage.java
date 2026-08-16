@@ -1,4 +1,4 @@
-package com.tarakki.boardtask.kafka;
+package com.tarakki.boardtask.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -100,6 +100,12 @@ public class TaskServiceTest {
         BoardNotFoundException boardNotFoundException = assertThrows(BoardNotFoundException.class,
                 () -> taskService.createTaskByBoardId(taskDTO, invalidBoardId)
         );
+
+        assertEquals("Board not found with id: " + invalidBoardId, boardNotFoundException.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(taskRepository, never()).save(any(Task.class));
+        verify(modelMapper, never()).map(any(), any());
     }
 
     @Test

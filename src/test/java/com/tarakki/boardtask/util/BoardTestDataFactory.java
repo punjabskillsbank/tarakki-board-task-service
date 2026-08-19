@@ -27,14 +27,23 @@ public class BoardTestDataFactory {
     public static final Long INVALID_ORG_ID = 999L;
     public static final Long VALID_BOARD_ID = 1L;
 
+    public static final UUID CREATED_BY = UUID.fromString("2af05d6e-b8db-4fe2-8385-d2a737332521");
+
     public static BoardDTO createBoardDTO() {
         BoardDTO dto = new BoardDTO();
         dto.setOrgId(VALID_ORG_ID);
         dto.setBoardName("Project Board");
         dto.setBoardDesc("Board for project tasks");
-        dto.setCreatedBy(UUID.randomUUID());
+        dto.setCreatedBy(CREATED_BY);
         return dto;
     }
+
+    public static BoardDTO createBoardDTOWithId() {
+        BoardDTO dto = createBoardDTO();
+        dto.setBoardId(VALID_BOARD_ID);
+        return dto;
+    }
+
 
     public static Board createBoardEntity() {
         Board board = new Board();
@@ -42,7 +51,7 @@ public class BoardTestDataFactory {
         board.setOrgId(VALID_ORG_ID);
         board.setBoardName("Project Board");
         board.setBoardDesc("Board for project tasks");
-        board.setCreatedBy(UUID.randomUUID());
+        board.setCreatedBy(CREATED_BY);
         return board;
     }
 

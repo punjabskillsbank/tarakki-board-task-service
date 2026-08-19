@@ -12,6 +12,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class BoardDTO {
 
+    private Long boardId;
+
     @NotNull
     private Long orgId;
 

@@ -3,8 +3,8 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.OrgMemberNotAcceptedException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
-import com.tarakki.boardtask.exception.OrgMemberNotRegisteredException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.service.BoardMemberService;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(BoardMemberController.class)
 public class BoardMemberControllerTest {
 
-    private static final String URL = "/api/{boardId}/boardMembers/{orgMemberId}";
+    private static final String URL = "/api/boards/{boardId}/members/{orgMemberId}";
 
     @MockitoBean
     private BoardMemberService boardMemberService;
@@ -71,7 +71,7 @@ public class BoardMemberControllerTest {
     }
 
     @Test
-    void shouldReturnNotFoundWhenBoardIdIsNotFound() throws Exception {
+    void shouldReturnNotFoundExceptionWhenBoardIdIsNotFound() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(invalidBoardId), eq(orgMemberId)))
                 .thenThrow(new BoardNotFoundException(invalidBoardId));
@@ -83,7 +83,7 @@ public class BoardMemberControllerTest {
     }
 
     @Test
-    void shouldReturnNotFoundWhenOrgMemberIsNotInBoardOrganization() throws Exception {
+    void shouldReturnNotFoundExceptionWhenOrgMemberIsNotInBoardOrganization() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(invalidOrgMemberId)))
                 .thenThrow(new OrgMemberNotFoundException(invalidOrgMemberId, orgId));
@@ -95,19 +95,19 @@ public class BoardMemberControllerTest {
     }
 
     @Test
-    void shouldReturnNotFoundWhenOrgMemberHasNoRegisteredAccount() throws Exception {
+    void shouldReturnConflictExceptionWhenOrgMemberHasNotAcceptedOrgInvite() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
-                .thenThrow(new OrgMemberNotRegisteredException(orgMemberId));
+                .thenThrow(new OrgMemberNotAcceptedException(orgMemberId, orgId));
 
         mockMvc.perform(post(URL, boardId, orgMemberId))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isConflict())
                 .andExpect(MockMvcResultMatchers.content().string(
-                        "Org member " + orgMemberId + " has no registered account yet"));
+                        "Org member " + orgMemberId + " has not accepted the invite to organization " + orgId));
     }
 
     @Test
-    void shouldReturnConflictWhenMemberIsAlreadyOnBoard() throws Exception {
+    void shouldReturnConflictExceptionWhenMemberIsAlreadyOnBoard() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
                 .thenThrow(new BoardMemberExistsException(memberId, boardId));
@@ -119,7 +119,7 @@ public class BoardMemberControllerTest {
     }
 
     @Test
-    void shouldReturnServiceUnavailableWhenOrganizationServiceIsUnreachable() throws Exception {
+    void shouldReturnServiceUnavailableExceptionWhenOrganizationServiceIsUnreachable() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
                 .thenThrow(new OrgServiceUnavailableException(orgId));

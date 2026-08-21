@@ -8,12 +8,13 @@ import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.OrgMemberNotAcceptedException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
-import com.tarakki.boardtask.exception.OrgMemberNotRegisteredException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.service.BoardMemberService;
+import com.tarakki.common.enums.OrgMemberStatus;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -46,11 +47,11 @@ public class BoardMemberServiceImpl implements BoardMemberService {
             throw new OrgMemberNotFoundException(orgMemberId, orgId);
         }
 
-        UUID memberId = orgMember.getMemberId();
-
-        if (memberId == null) {
-            throw new OrgMemberNotRegisteredException(orgMemberId);
+        if (!isAcceptedInOrg(orgMember)) {
+            throw new OrgMemberNotAcceptedException(orgMemberId, orgId);
         }
+
+        UUID memberId = orgMember.getMemberId();
 
         if (isAlreadyOnBoard(boardId, memberId)) {
             throw new BoardMemberExistsException(memberId, boardId);
@@ -77,6 +78,10 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         } catch (RestClientException exception) {
             throw new OrgServiceUnavailableException(orgId);
         }
+    }
+
+    private boolean isAcceptedInOrg(OrgMemberDTO orgMember) {
+        return orgMember.getMemberAccountStatus() == OrgMemberStatus.ACCEPTED;
     }
 
     private boolean isAlreadyOnBoard(Long boardId, UUID memberId) {

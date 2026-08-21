@@ -8,8 +8,8 @@ import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.OrgMemberNotAcceptedException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
-import com.tarakki.boardtask.exception.OrgMemberNotRegisteredException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
@@ -168,19 +168,19 @@ public class BoardMemberServiceTest {
     }
 
     @Test
-    void addMemberToBoard_shouldThrowOrgMemberNotRegisteredExceptionWhenMemberIdIsNull() {
+    void addMemberToBoard_shouldThrowOrgMemberNotAcceptedExceptionWhenOrgMemberHasNotAcceptedInvite() {
 
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
-                .thenReturn(BoardMemberTestDataFactory.createUnregisteredOrgMemberDto());
+                .thenReturn(BoardMemberTestDataFactory.createPendingOrgMemberDto());
 
-        OrgMemberNotRegisteredException exception = assertThrows(OrgMemberNotRegisteredException.class,
+        OrgMemberNotAcceptedException exception = assertThrows(OrgMemberNotAcceptedException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
         );
 
-        assertEquals("Org member " + orgMemberId + " has no registered account yet",
+        assertEquals("Org member " + orgMemberId + " has not accepted the invite to organization " + orgId,
                 exception.getMessage());
 
         verify(boardRepository).findById(boardId);

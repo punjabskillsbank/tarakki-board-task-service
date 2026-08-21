@@ -4,6 +4,7 @@ import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.enums.BoardRole;
+import com.tarakki.common.enums.OrgMemberStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -16,7 +17,6 @@ public class BoardMemberTestDataFactory {
     public static final Long ORG_MEMBER_ID = 5L;
     public static final Long INVALID_ORG_MEMBER_ID = 888L;
     public static final UUID MEMBER_ID = UUID.randomUUID();
-    public static final String EMAIL = "teammate@tickmark.io";
     public static final String ORG_API_ENDPOINT = "/api/organizations";
     public static final BoardRole ROLE = BoardRole.MEMBER;
     public static final Boolean CAN_EDIT = false;
@@ -53,16 +53,16 @@ public class BoardMemberTestDataFactory {
         orgMemberDTO.setOrgMemberId(ORG_MEMBER_ID);
         orgMemberDTO.setOrgId(ORG_ID);
         orgMemberDTO.setMemberId(MEMBER_ID);
-        orgMemberDTO.setEmail(EMAIL);
+        orgMemberDTO.setMemberAccountStatus(OrgMemberStatus.ACCEPTED);
         return orgMemberDTO;
     }
 
     /**
-     * An org member who was invited by email but has never registered, so carries no member UUID.
+     * An org member who has been invited but has not yet accepted the organization invite.
      */
-    public static OrgMemberDTO createUnregisteredOrgMemberDto() {
+    public static OrgMemberDTO createPendingOrgMemberDto() {
         OrgMemberDTO orgMemberDTO = createOrgMemberDto();
-        orgMemberDTO.setMemberId(null);
+        orgMemberDTO.setMemberAccountStatus(OrgMemberStatus.PENDING);
         return orgMemberDTO;
     }
 }

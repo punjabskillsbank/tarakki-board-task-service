@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.tarakki.common.enums.OrgMemberStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,6 @@ public class OrgMemberDTO {
 
     private UUID memberId;
 
-    private String email;
+    private OrgMemberStatus memberAccountStatus;
 
 }

@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/{boardId}/boardMembers")
+@RequestMapping("/api/boards/{boardId}/members")
 @AllArgsConstructor
 public class BoardMemberController {
 

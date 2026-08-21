@@ -48,7 +48,7 @@ public class AuditLoggingAspect {
                     SERVICE_NAME,
                     "BOARD",
                     boardId.toString(),
-                    "DELETE_BOARD",
+                    "BOARD_DELETED",
                     performedBy,
                     oldValue,
                     null,

@@ -1,9 +1,10 @@
 package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.TaskDTO;
-import com.tarakki.boardtask.entity.Board;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.entity.Task;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.service.TaskService;
@@ -25,7 +26,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public TaskDTO createTaskByBoardId(TaskDTO taskDTO, Long boardId) {
 
-        Board boards = boardRepository.findById(boardId)
+        boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
 
         Task task = modelMapper.map(taskDTO, Task.class);
@@ -44,5 +45,20 @@ public class TaskServiceImpl implements TaskService {
         return tasks.stream()
                 .map(task -> modelMapper.map(task, TaskDTO.class))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public TaskDTO patchTaskById(Long boardId, Long taskId, TaskUpdateDTO taskUpdateDTO) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        modelMapper.map(taskUpdateDTO, task);
+
+        Task updatedTask = taskRepository.save(task);
+        return modelMapper.map(updatedTask, TaskDTO.class);
     }
 }

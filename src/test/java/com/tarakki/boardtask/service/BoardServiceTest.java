@@ -39,6 +39,7 @@ class BoardServiceTest {
     private BoardServiceImpl boardService;
 
     private BoardDTO dto;
+    private BoardDTO dtoWithId;
     private Board board;
     private Long existingBoardId;
     private Long missingBoardId;
@@ -46,6 +47,7 @@ class BoardServiceTest {
     @BeforeEach
     void setUp() {
         dto = BoardTestDataFactory.createBoardDTO();
+        dtoWithId = BoardTestDataFactory.createBoardDTOWithId();
         board = BoardTestDataFactory.createBoardEntity();
         existingBoardId = BoardTestDataFactory.createExistingBoardId();
         missingBoardId = BoardTestDataFactory.createMissingBoardId();
@@ -61,11 +63,12 @@ class BoardServiceTest {
                 .thenReturn(board);
 
         when(modelMapper.map(any(Board.class), eq(BoardDTO.class)))
-                .thenReturn(dto);
+                .thenReturn(dtoWithId);
 
         BoardDTO result = boardService.createBoard(dto);
 
         assertNotNull(result);
+        assertEquals(dtoWithId.getBoardId(), result.getBoardId());
         assertEquals(dto.getBoardName(), result.getBoardName());
         assertEquals(dto.getBoardDesc(), result.getBoardDesc());
         assertEquals(dto.getOrgId(), result.getOrgId());
@@ -115,12 +118,13 @@ class BoardServiceTest {
                 .thenReturn(boards);
 
         when(modelMapper.map(any(Board.class), eq(BoardDTO.class)))
-                .thenReturn(dto);
+                .thenReturn(dtoWithId);
 
         List<BoardDTO> result = boardService.getBoardsByOrganization(orgId);
 
         assertNotNull(result);
         assertEquals(1, result.size());
+        assertEquals(dtoWithId.getBoardId(), result.get(0).getBoardId());
         assertEquals(dto.getBoardName(), result.get(0).getBoardName());
         assertEquals(dto.getBoardDesc(), result.get(0).getBoardDesc());
 
@@ -155,11 +159,12 @@ class BoardServiceTest {
         when(boardRepository.findById(existingBoardId))
                 .thenReturn(Optional.of(board));
         when(modelMapper.map(board, BoardDTO.class))
-                .thenReturn(dto);
+                .thenReturn(dtoWithId);
 
         BoardDTO result = boardService.getBoardById(existingBoardId);
 
         assertNotNull(result);
+        assertEquals(dtoWithId.getBoardId(), result.getBoardId());
         assertEquals(dto.getBoardName(), result.getBoardName());
         verify(boardRepository).findById(existingBoardId);
         verify(modelMapper).map(board, BoardDTO.class);

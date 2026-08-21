@@ -41,9 +41,9 @@ class BoardControllerTest {
     private BoardDTO output;
 
     @BeforeEach
-        void setUp() {
-                input = BoardTestDataFactory.createBoardDTO();
-                output = BoardTestDataFactory.createBoardDTO();
+    void setUp() {
+        input = BoardTestDataFactory.createBoardDTO();
+        output = BoardTestDataFactory.createBoardDTOWithId();
     }
 
     @Test
@@ -56,6 +56,7 @@ class BoardControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.boardId").value(output.getBoardId()))
                 .andExpect(jsonPath("$.boardName").value(input.getBoardName()))
                 .andExpect(jsonPath("$.boardDesc").value(input.getBoardDesc()));
     }
@@ -139,6 +140,7 @@ class BoardControllerTest {
         mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].boardId").value(output.getBoardId()))
                 .andExpect(jsonPath("$[0].boardName").value(output.getBoardName()))
                 .andExpect(jsonPath("$[0].boardDesc").value(output.getBoardDesc()));
     }
@@ -167,6 +169,7 @@ class BoardControllerTest {
         mockMvc.perform(get("/api/boards/{id}", boardId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.boardId").value(output.getBoardId()))
                 .andExpect(jsonPath("$.boardName").value(output.getBoardName()))
                 .andExpect(jsonPath("$.boardDesc").value(output.getBoardDesc()));
     }

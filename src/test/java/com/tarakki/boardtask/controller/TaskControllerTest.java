@@ -1,7 +1,9 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +21,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -51,7 +54,7 @@ public class TaskControllerTest {
         when(taskService.createTaskByBoardId(any(), eq(boardId)))
                 .thenReturn(taskDto);
 
-        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isCreated())
@@ -66,7 +69,7 @@ public class TaskControllerTest {
     void shouldGetTasksByBoardId() throws Exception {
         when(taskService.getTasksByBoardId(boardId)).thenReturn(List.of(taskDto));
 
-        mockMvc.perform(get("/api/tasks/{boardId}", boardId))
+        mockMvc.perform(get("/api/{boardId}/task", boardId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].groupId").value(taskDto.getGroupId()))
                 .andExpect(jsonPath("$[0].title").value(taskDto.getTitle()))
@@ -78,7 +81,7 @@ public class TaskControllerTest {
         when(taskService.getTasksByBoardId(boardId))
                 .thenThrow(new BoardNotFoundException(boardId));
 
-        mockMvc.perform(get("/api/tasks/{boardId}", boardId))
+        mockMvc.perform(get("/api/{boardId}/task", boardId))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board not found with id: " + boardId));
@@ -89,7 +92,7 @@ public class TaskControllerTest {
 
         taskDto.setBoardId(null);
 
-        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
@@ -101,7 +104,7 @@ public class TaskControllerTest {
         when(taskService.createTaskByBoardId(any(),eq(boardId)))
                 .thenThrow(new BoardNotFoundException(boardId));
 
-        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isNotFound())
@@ -115,7 +118,7 @@ public class TaskControllerTest {
 
         taskDto.setGroupId(null);
 
-        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
@@ -126,7 +129,7 @@ public class TaskControllerTest {
 
         taskDto.setTitle(null);
 
-        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
@@ -137,10 +140,41 @@ public class TaskControllerTest {
 
         taskDto.setCreatedBy(null);
 
-        mockMvc.perform(post("/api/tasks/{boardId}", boardId)
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void shouldPatchTaskSuccessfully() throws Exception {
+        Long taskId = TaskTestDataFactory.TASK_ID;
+        TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
+        TaskDTO patchedResponseDto = TaskTestDataFactory.createTaskDto();
+
+        when(taskService.patchTaskById(eq(boardId), eq(taskId), any(TaskUpdateDTO.class)))
+                .thenReturn(patchedResponseDto);
+
+        mockMvc.perform(patch("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(patchedResponseDto.getTitle()))
+                .andExpect(jsonPath("$.position").value(patchedResponseDto.getPosition()))
+                .andExpect(jsonPath("$.groupId").value(patchedResponseDto.getGroupId()));
+    }
+
+    @Test
+    void shouldHandleTaskNotFoundException() throws Exception {
+        Long taskId = TaskTestDataFactory.TASK_ID;
+        TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
+
+        when(taskService.patchTaskById(eq(boardId), eq(taskId), any(TaskUpdateDTO.class)))
+                .thenThrow(new TaskNotFoundException(taskId));
+
+        mockMvc.perform(patch("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequestDto)))
+                .andExpect(status().isNotFound());
+    }
 }

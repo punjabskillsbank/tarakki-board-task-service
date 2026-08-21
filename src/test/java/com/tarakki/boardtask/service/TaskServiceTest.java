@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.TaskDTO;
+import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
@@ -22,9 +23,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class TaskServiceTest {
@@ -97,6 +100,12 @@ public class TaskServiceTest {
         BoardNotFoundException boardNotFoundException = assertThrows(BoardNotFoundException.class,
                 () -> taskService.createTaskByBoardId(taskDTO, invalidBoardId)
         );
+
+        assertEquals("Board not found with id: " + invalidBoardId, boardNotFoundException.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(taskRepository, never()).save(any(Task.class));
+        verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
@@ -160,4 +169,38 @@ public class TaskServiceTest {
         verify(taskRepository).findByBoardId(boardId);
         verify(modelMapper, never()).map(any(), any());
     }
+
+    @Test
+    void shouldPatchTaskFieldsInServiceImpl() {
+        Long boardId = TaskTestDataFactory.BOARD_ID;
+        Long taskId = TaskTestDataFactory.TASK_ID;
+
+        TaskUpdateDTO incomingPatchDto = TaskTestDataFactory.createTaskUpdateDto();
+        Task taskEntity = TaskTestDataFactory.createTaskEntity();
+        taskEntity.setTaskId(taskId);
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(taskRepository.findById(taskId))
+                .thenReturn(Optional.of(taskEntity));
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskDTO expectedResponseDto = TaskTestDataFactory.createTaskDto();
+
+        doNothing().when(modelMapper).map(any(TaskUpdateDTO.class), any(Task.class));
+        when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
+                .thenReturn(expectedResponseDto);
+
+        TaskDTO result = taskService.patchTaskById(boardId, taskId, incomingPatchDto);
+
+        assertNotNull(result);
+        assertEquals(expectedResponseDto.getTitle(), result.getTitle());
+        assertEquals(expectedResponseDto.getPosition(), result.getPosition());
+
+        verify(boardRepository, times(1)).findById(boardId);
+        verify(taskRepository, times(1)).findById(taskId);
+        verify(modelMapper, times(1)).map(incomingPatchDto, taskEntity);
+        verify(taskRepository, times(1)).save(taskEntity);
+    }
+
 }

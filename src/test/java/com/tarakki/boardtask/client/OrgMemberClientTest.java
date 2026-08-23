@@ -1,6 +1,6 @@
 package com.tarakki.boardtask.client;
 
-import com.tarakki.boardtask.dto.OrgMemberDTO;
+import com.tarakki.common.dto.OrgMemberDTO;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

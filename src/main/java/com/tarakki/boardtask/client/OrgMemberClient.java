@@ -1,6 +1,6 @@
 package com.tarakki.boardtask.client;
 
-import com.tarakki.boardtask.dto.OrgMemberDTO;
+import com.tarakki.common.dto.OrgMemberDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;

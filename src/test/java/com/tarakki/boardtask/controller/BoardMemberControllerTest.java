@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardMemberDTO;
+import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotAcceptedException;
@@ -12,12 +13,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,7 +39,11 @@ public class BoardMemberControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private BoardMemberDTO boardMemberDto;
+    private BoardMemberRequestDTO boardMemberRequestDTO;
     private Long boardId;
     private Long invalidBoardId;
     private Long orgId;
@@ -46,6 +54,7 @@ public class BoardMemberControllerTest {
     @BeforeEach
     void setUp() {
         boardMemberDto = BoardMemberTestDataFactory.createBoardMemberDto();
+        boardMemberRequestDTO = BoardMemberTestDataFactory.createBoardMemberRequestDto();
         boardId = BoardMemberTestDataFactory.BOARD_ID;
         invalidBoardId = BoardMemberTestDataFactory.INVALID_BOARD_ID;
         orgId = BoardMemberTestDataFactory.ORG_ID;
@@ -57,10 +66,12 @@ public class BoardMemberControllerTest {
     @Test
     void shouldAddMemberToSpecifiedBoard() throws Exception {
 
-        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
+        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId), any(BoardMemberRequestDTO.class)))
                 .thenReturn(boardMemberDto);
 
-        mockMvc.perform(post(URL, boardId, orgMemberId))
+        mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.boardMemberId").value(boardMemberDto.getBoardMemberId()))
                 .andExpect(jsonPath("$.boardId").value(boardMemberDto.getBoardId()))
@@ -73,10 +84,12 @@ public class BoardMemberControllerTest {
     @Test
     void shouldReturnNotFoundExceptionWhenBoardIdIsNotFound() throws Exception {
 
-        when(boardMemberService.addMemberToBoard(eq(invalidBoardId), eq(orgMemberId)))
+        when(boardMemberService.addMemberToBoard(eq(invalidBoardId), eq(orgMemberId), any(BoardMemberRequestDTO.class)))
                 .thenThrow(new BoardNotFoundException(invalidBoardId));
 
-        mockMvc.perform(post(URL, invalidBoardId, orgMemberId))
+        mockMvc.perform(post(URL, invalidBoardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board not found with id: " + invalidBoardId));
@@ -85,10 +98,12 @@ public class BoardMemberControllerTest {
     @Test
     void shouldReturnNotFoundExceptionWhenOrgMemberIsNotInBoardOrganization() throws Exception {
 
-        when(boardMemberService.addMemberToBoard(eq(boardId), eq(invalidOrgMemberId)))
+        when(boardMemberService.addMemberToBoard(eq(boardId), eq(invalidOrgMemberId), any(BoardMemberRequestDTO.class)))
                 .thenThrow(new OrgMemberNotFoundException(invalidOrgMemberId, orgId));
 
-        mockMvc.perform(post(URL, boardId, invalidOrgMemberId))
+        mockMvc.perform(post(URL, boardId, invalidOrgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Org member " + invalidOrgMemberId + " not found in organization " + orgId));
@@ -97,10 +112,12 @@ public class BoardMemberControllerTest {
     @Test
     void shouldReturnConflictExceptionWhenOrgMemberHasNotAcceptedOrgInvite() throws Exception {
 
-        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
+        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId), any(BoardMemberRequestDTO.class)))
                 .thenThrow(new OrgMemberNotAcceptedException(orgMemberId, orgId));
 
-        mockMvc.perform(post(URL, boardId, orgMemberId))
+        mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isConflict())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Org member " + orgMemberId + " has not accepted the invite to organization " + orgId));
@@ -109,10 +126,12 @@ public class BoardMemberControllerTest {
     @Test
     void shouldReturnConflictExceptionWhenMemberIsAlreadyOnBoard() throws Exception {
 
-        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
+        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId), any(BoardMemberRequestDTO.class)))
                 .thenThrow(new BoardMemberExistsException(memberId, boardId));
 
-        mockMvc.perform(post(URL, boardId, orgMemberId))
+        mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isConflict())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Member " + memberId + " is already a member of board " + boardId));
@@ -121,12 +140,25 @@ public class BoardMemberControllerTest {
     @Test
     void shouldReturnServiceUnavailableExceptionWhenOrganizationServiceIsUnreachable() throws Exception {
 
-        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId)))
+        when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId), any(BoardMemberRequestDTO.class)))
                 .thenThrow(new OrgServiceUnavailableException(orgId));
 
-        mockMvc.perform(post(URL, boardId, orgMemberId))
+        mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Unable to reach organization service to look up members of organization " + orgId));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenEmailIsMissing() throws Exception {
+
+        boardMemberRequestDTO.setEmail(null);
+
+        mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
+                .andExpect(status().isBadRequest());
     }
 }

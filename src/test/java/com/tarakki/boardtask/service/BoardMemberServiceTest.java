@@ -2,7 +2,7 @@ package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
+import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
@@ -13,6 +13,7 @@ import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
+import com.tarakki.common.dto.OrgMemberDTO;
 import com.tarakki.boardtask.serviceImpl.BoardMemberServiceImpl;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
@@ -61,6 +62,7 @@ public class BoardMemberServiceTest {
     private BoardMember boardMemberEntity;
     private BoardMemberDTO boardMemberDTO;
     private OrgMemberDTO orgMemberDTO;
+    private BoardMemberRequestDTO boardMemberRequestDTO;
     private Long boardId;
     private Long invalidBoardId;
     private Long orgId;
@@ -74,6 +76,7 @@ public class BoardMemberServiceTest {
         boardMemberEntity = BoardMemberTestDataFactory.createBoardMemberEntity();
         boardMemberDTO = BoardMemberTestDataFactory.createBoardMemberDto();
         orgMemberDTO = BoardMemberTestDataFactory.createOrgMemberDto();
+        boardMemberRequestDTO = BoardMemberTestDataFactory.createBoardMemberRequestDto();
         boardId = BoardMemberTestDataFactory.BOARD_ID;
         invalidBoardId = BoardMemberTestDataFactory.INVALID_BOARD_ID;
         orgId = BoardMemberTestDataFactory.ORG_ID;
@@ -103,7 +106,7 @@ public class BoardMemberServiceTest {
         when(modelMapper.map(any(BoardMember.class), eq(BoardMemberDTO.class)))
                 .thenReturn(boardMemberDTO);
 
-        BoardMemberDTO result = boardMemberService.addMemberToBoard(boardId, orgMemberId);
+        BoardMemberDTO result = boardMemberService.addMemberToBoard(boardId, orgMemberId, boardMemberRequestDTO);
 
         assertNotNull(result);
         assertEquals(boardMemberDTO.getBoardId(), result.getBoardId());
@@ -132,7 +135,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.empty());
 
         BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
-                () -> boardMemberService.addMemberToBoard(invalidBoardId, orgMemberId)
+                () -> boardMemberService.addMemberToBoard(invalidBoardId, orgMemberId, boardMemberRequestDTO)
         );
 
         assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
@@ -154,7 +157,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(null);
 
         OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
-                () -> boardMemberService.addMemberToBoard(boardId, invalidOrgMemberId)
+                () -> boardMemberService.addMemberToBoard(boardId, invalidOrgMemberId, boardMemberRequestDTO)
         );
 
         assertEquals("Org member " + invalidOrgMemberId + " not found in organization " + orgId,
@@ -177,7 +180,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(BoardMemberTestDataFactory.createPendingOrgMemberDto());
 
         OrgMemberNotAcceptedException exception = assertThrows(OrgMemberNotAcceptedException.class,
-                () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
+                () -> boardMemberService.addMemberToBoard(boardId, orgMemberId, boardMemberRequestDTO)
         );
 
         assertEquals("Org member " + orgMemberId + " has not accepted the invite to organization " + orgId,
@@ -203,7 +206,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(true);
 
         BoardMemberExistsException exception = assertThrows(BoardMemberExistsException.class,
-                () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
+                () -> boardMemberService.addMemberToBoard(boardId, orgMemberId, boardMemberRequestDTO)
         );
 
         assertEquals("Member " + memberId + " is already a member of board " + boardId,
@@ -226,7 +229,7 @@ public class BoardMemberServiceTest {
                 .thenThrow(new RestClientException("Connection refused"));
 
         OrgServiceUnavailableException exception = assertThrows(OrgServiceUnavailableException.class,
-                () -> boardMemberService.addMemberToBoard(boardId, orgMemberId)
+                () -> boardMemberService.addMemberToBoard(boardId, orgMemberId, boardMemberRequestDTO)
         );
 
         assertEquals("Unable to reach organization service to look up members of organization " + orgId,

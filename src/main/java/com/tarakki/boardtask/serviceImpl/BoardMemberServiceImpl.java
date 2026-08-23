@@ -2,7 +2,7 @@ package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
+import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
@@ -14,6 +14,7 @@ import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.service.BoardMemberService;
+import com.tarakki.common.dto.OrgMemberDTO;
 import com.tarakki.common.enums.OrgMemberStatus;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -34,7 +35,7 @@ public class BoardMemberServiceImpl implements BoardMemberService {
 
     @Override
     @Transactional
-    public BoardMemberDTO addMemberToBoard(Long boardId, Long orgMemberId) {
+    public BoardMemberDTO addMemberToBoard(Long boardId, Long orgMemberId, BoardMemberRequestDTO request) {
 
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));

@@ -1,8 +1,9 @@
 package com.tarakki.boardtask.util;
 
 import com.tarakki.boardtask.dto.BoardMemberDTO;
+import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.entity.BoardMember;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
+import com.tarakki.common.dto.OrgMemberDTO;
 import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.common.enums.OrgMemberStatus;
 
@@ -17,6 +18,7 @@ public class BoardMemberTestDataFactory {
     public static final Long ORG_MEMBER_ID = 5L;
     public static final Long INVALID_ORG_MEMBER_ID = 888L;
     public static final UUID MEMBER_ID = UUID.randomUUID();
+    public static final String EMAIL = "member@tarakki.com";
     public static final String ORG_API_ENDPOINT = "/api/organizations";
     public static final BoardRole ROLE = BoardRole.MEMBER;
     public static final Boolean CAN_EDIT = false;
@@ -64,5 +66,12 @@ public class BoardMemberTestDataFactory {
         OrgMemberDTO orgMemberDTO = createOrgMemberDto();
         orgMemberDTO.setMemberAccountStatus(OrgMemberStatus.PENDING);
         return orgMemberDTO;
+    }
+
+    public static BoardMemberRequestDTO createBoardMemberRequestDto() {
+        BoardMemberRequestDTO requestDTO = new BoardMemberRequestDTO();
+        requestDTO.setEmail(EMAIL);
+        requestDTO.setMemberAccountStatus(OrgMemberStatus.ACCEPTED);
+        return requestDTO;
     }
 }

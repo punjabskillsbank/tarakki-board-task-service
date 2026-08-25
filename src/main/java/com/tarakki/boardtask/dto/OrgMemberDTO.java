@@ -1,22 +1,26 @@
 package com.tarakki.boardtask.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.tarakki.boardtask.enums.OrgMemberStatus;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
+import java.util.UUID;
+
 @NoArgsConstructor
 @AllArgsConstructor
-public class BoardMemberRequestDTO {
+@Getter
+@Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class OrgMemberDTO {
 
-    @NotNull(message = "Email must not be empty")
-    @Email(message = "Please enter a valid email address")
-    private String email;
+    private Long orgMemberId;
+
+    private Long orgId;
+
+    private UUID memberId;
 
     private OrgMemberStatus memberAccountStatus;
 

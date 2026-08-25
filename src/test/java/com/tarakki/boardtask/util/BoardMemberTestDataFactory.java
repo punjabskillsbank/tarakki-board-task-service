@@ -3,9 +3,9 @@ package com.tarakki.boardtask.util;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.entity.BoardMember;
-import com.tarakki.common.dto.OrgMemberDTO;
+import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.enums.BoardRole;
-import com.tarakki.common.enums.OrgMemberStatus;
+import com.tarakki.boardtask.enums.OrgMemberStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

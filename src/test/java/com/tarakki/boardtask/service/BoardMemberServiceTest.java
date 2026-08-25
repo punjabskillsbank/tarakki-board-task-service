@@ -13,7 +13,7 @@ import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
-import com.tarakki.common.dto.OrgMemberDTO;
+import com.tarakki.boardtask.dto.OrgMemberDTO;
 import com.tarakki.boardtask.serviceImpl.BoardMemberServiceImpl;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import com.tarakki.boardtask.util.BoardTestDataFactory;

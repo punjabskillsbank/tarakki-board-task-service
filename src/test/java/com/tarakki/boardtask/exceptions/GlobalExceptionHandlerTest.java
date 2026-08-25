@@ -3,7 +3,6 @@ package com.tarakki.boardtask.exceptions;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.GlobalExceptionHandler;
-import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;

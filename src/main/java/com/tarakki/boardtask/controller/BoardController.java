@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.tarakki.boardtask.annotation.Auditable;
+import com.tarakki.boardtask.entity.Board;
+
 import java.util.List;
 
 @RestController
@@ -24,12 +27,13 @@ public class BoardController {
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
+    @Auditable(eventName = "BOARD_DELETED", entityName = "BOARD", entityClass = Board.class, entityIdArgSpel = "#boardId")
     @DeleteMapping("/{boardId}")
     public ResponseEntity<Void> deleteBoard(@PathVariable Long boardId) {
         boardService.deleteBoard(boardId);
         return ResponseEntity.noContent().build();
     }
-
+    
     @GetMapping("/organization/{orgId}")
     public ResponseEntity<List<BoardDTO>> getBoardsByOrganization(@PathVariable Long orgId) {
 

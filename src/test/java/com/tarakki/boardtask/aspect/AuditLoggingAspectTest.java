@@ -1,12 +1,14 @@
 package com.tarakki.boardtask.aspect;
 
+import com.tarakki.boardtask.annotation.Auditable;
 import com.tarakki.boardtask.controller.BoardController;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.kafka.AuditKafkaProducer;
-import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.service.BoardService;
 import tools.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,8 +19,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.tarakki.boardtask.util.BoardTestDataFactory.*;
 import static com.tarakki.boardtask.util.AuditTestDataFactory.*;
@@ -48,21 +50,39 @@ class AuditLoggingAspectTest {
     private AuditKafkaProducer auditKafkaProducer;
 
     @MockitoBean
-    private BoardRepository boardRepository;
+    private EntityManager entityManager;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     private AuditLoggingAspect unitAspect;
     private AuditKafkaProducer mockProducer;
-    private BoardRepository mockBoardRepository;
+    private EntityManager mockEntityManager;
+    private Auditable mockAuditable;
 
     @BeforeEach
     void setUp() {
         RequestContextHolder.resetRequestAttributes();
         mockProducer = mock(AuditKafkaProducer.class);
-        mockBoardRepository = mock(BoardRepository.class);
-        unitAspect = new AuditLoggingAspect(mockProducer, objectMapper, mockBoardRepository);
+        mockEntityManager = mock(EntityManager.class);
+        unitAspect = new AuditLoggingAspect(mockProducer, objectMapper, mockEntityManager);
+        
+        mockAuditable = mock(Auditable.class);
+        when(mockAuditable.eventName()).thenReturn("BOARD_DELETED");
+        when(mockAuditable.entityName()).thenReturn("BOARD");
+        doReturn(Board.class).when(mockAuditable).entityClass();
+        when(mockAuditable.entityIdArgSpel()).thenReturn("#boardId");
+        when(mockAuditable.entityIdResultSpel()).thenReturn("");
+    }
+    
+    private ProceedingJoinPoint mockJoinPointWithArgs(Object... args) throws NoSuchMethodException {
+        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+        MethodSignature signature = mock(MethodSignature.class);
+        Method method = BoardController.class.getMethod("deleteBoard", Long.class);
+        when(signature.getMethod()).thenReturn(method);
+        when(joinPoint.getSignature()).thenReturn(signature);
+        when(joinPoint.getArgs()).thenReturn(args);
+        return joinPoint;
     }
 
     @Test
@@ -70,12 +90,12 @@ class AuditLoggingAspectTest {
         Long boardId = AUDIT_BOARD_ID;
         Board existingBoard = createAuditBoard(boardId);
 
-        when(mockBoardRepository.findById(boardId)).thenReturn(Optional.of(existingBoard));
+        when(mockEntityManager.find(Board.class, boardId)).thenReturn(existingBoard).thenReturn(null);
 
-        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+        ProceedingJoinPoint joinPoint = mockJoinPointWithArgs(boardId);
         when(joinPoint.proceed()).thenReturn(null);
 
-        unitAspect.logBoardDeletion(joinPoint, boardId);
+        unitAspect.logAuditActivity(joinPoint, mockAuditable);
 
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockProducer).sendAuditLog(messageCaptor.capture());
@@ -90,14 +110,12 @@ class AuditLoggingAspectTest {
         assertEquals(EVENT_NAME, payload.get("event_name"));
         assertEquals(SYSTEM_ACTOR, payload.get("performed_by"));
 
-        // old_value should contain the board data fetched from DB
         assertNotNull(payload.get("old_value"));
         String oldValueJson = (String) payload.get("old_value");
         Map<?, ?> oldValueMap = objectMapper.readValue(oldValueJson, Map.class);
         assertEquals(AUDIT_BOARD_NAME, oldValueMap.get("boardName"));
         assertEquals(AUDIT_BOARD_DESCRIPTION, oldValueMap.get("boardDesc"));
 
-        // new_value should be null for delete
         assertNull(payload.get("new_value"));
         assertNotNull(payload.get("event_time"));
     }
@@ -105,12 +123,12 @@ class AuditLoggingAspectTest {
     @Test
     void shouldHandleMissingBoardGracefully() throws Throwable {
         Long boardId = MISSING_BOARD_ID;
-        when(mockBoardRepository.findById(boardId)).thenReturn(Optional.empty());
+        when(mockEntityManager.find(Board.class, boardId)).thenReturn(null);
 
-        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+        ProceedingJoinPoint joinPoint = mockJoinPointWithArgs(boardId);
         when(joinPoint.proceed()).thenReturn(null);
 
-        unitAspect.logBoardDeletion(joinPoint, boardId);
+        unitAspect.logAuditActivity(joinPoint, mockAuditable);
 
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockProducer).sendAuditLog(messageCaptor.capture());
@@ -125,7 +143,7 @@ class AuditLoggingAspectTest {
         Long boardId = AUDIT_BOARD_ID_ALT;
         Board existingBoard = createAlternateAuditBoard(boardId);
 
-        when(boardRepository.findById(boardId)).thenReturn(Optional.of(existingBoard));
+        when(entityManager.find(Board.class, boardId)).thenReturn(existingBoard).thenReturn(null);
         doNothing().when(boardService).deleteBoard(boardId);
 
         boardController.deleteBoard(boardId);
@@ -140,10 +158,9 @@ class AuditLoggingAspectTest {
         assertEquals(SERVICE_NAME, payload.get("service_name"));
         assertEquals(ENTITY_NAME, payload.get("entity_name"));
         assertEquals(boardId.toString(),   payload.get("entity_id"));
-        assertEquals(EVENT_NAME, payload.get("event_name"));
+        assertEquals("BOARD_DELETED", payload.get("event_name"));
         assertEquals(SYSTEM_ACTOR, payload.get("performed_by"));
 
-        // old_value should be populated from the mocked DB lookup
         assertNotNull(payload.get("old_value"));
         assertNull(payload.get("new_value"));
         assertNotNull(payload.get("event_time"));
@@ -153,12 +170,12 @@ class AuditLoggingAspectTest {
     void shouldUseMemberIdFromRequestHeader() throws Throwable {
         Long boardId = AUDIT_BOARD_ID;
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(requestWithMemberId()));
-        when(mockBoardRepository.findById(boardId)).thenReturn(Optional.empty());
+        when(mockEntityManager.find(Board.class, boardId)).thenReturn(null);
 
-        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+        ProceedingJoinPoint joinPoint = mockJoinPointWithArgs(boardId);
         when(joinPoint.proceed()).thenReturn(null);
 
-        unitAspect.logBoardDeletion(joinPoint, boardId);
+        unitAspect.logAuditActivity(joinPoint, mockAuditable);
 
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockProducer).sendAuditLog(messageCaptor.capture());
@@ -172,12 +189,12 @@ class AuditLoggingAspectTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(MEMBER_ID_HEADER, " ");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-        when(mockBoardRepository.findById(boardId)).thenReturn(Optional.empty());
+        when(mockEntityManager.find(Board.class, boardId)).thenReturn(null);
 
-        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+        ProceedingJoinPoint joinPoint = mockJoinPointWithArgs(boardId);
         when(joinPoint.proceed()).thenReturn(null);
 
-        unitAspect.logBoardDeletion(joinPoint, boardId);
+        unitAspect.logAuditActivity(joinPoint, mockAuditable);
 
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockProducer).sendAuditLog(messageCaptor.capture());
@@ -188,10 +205,10 @@ class AuditLoggingAspectTest {
     @Test
     void shouldStopDeletionWhenOldBoardLookupFails() throws Throwable {
         Long boardId = AUDIT_BOARD_ID;
-        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
-        when(mockBoardRepository.findById(boardId)).thenThrow(new IllegalStateException());
+        ProceedingJoinPoint joinPoint = mockJoinPointWithArgs(boardId);
+        when(mockEntityManager.find(Board.class, boardId)).thenThrow(new IllegalStateException());
 
-        assertThrows(IllegalStateException.class, () -> unitAspect.logBoardDeletion(joinPoint, boardId));
+        assertThrows(IllegalStateException.class, () -> unitAspect.logAuditActivity(joinPoint, mockAuditable));
 
         verify(joinPoint, never()).proceed();
         verifyNoInteractions(mockProducer);
@@ -201,12 +218,12 @@ class AuditLoggingAspectTest {
     void shouldStopDeletionWhenOldBoardSerializationFails() throws Throwable {
         Long boardId = AUDIT_BOARD_ID;
         ObjectMapper failingObjectMapper = mock(ObjectMapper.class);
-        AuditLoggingAspect aspect = new AuditLoggingAspect(mockProducer, failingObjectMapper, mockBoardRepository);
-        when(mockBoardRepository.findById(boardId)).thenReturn(Optional.of(createAuditBoard(boardId)));
+        AuditLoggingAspect aspect = new AuditLoggingAspect(mockProducer, failingObjectMapper, mockEntityManager);
+        when(mockEntityManager.find(Board.class, boardId)).thenReturn(createAuditBoard(boardId));
         when(failingObjectMapper.writeValueAsString(any())).thenThrow(new IllegalStateException());
-        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+        ProceedingJoinPoint joinPoint = mockJoinPointWithArgs(boardId);
 
-        assertThrows(IllegalStateException.class, () -> aspect.logBoardDeletion(joinPoint, boardId));
+        assertThrows(IllegalStateException.class, () -> aspect.logAuditActivity(joinPoint, mockAuditable));
 
         verify(joinPoint, never()).proceed();
         verifyNoInteractions(mockProducer);
@@ -216,13 +233,13 @@ class AuditLoggingAspectTest {
     void shouldNotFailDeletionWhenAuditPublishingFails() throws Throwable {
         Long boardId = AUDIT_BOARD_ID;
         Object deletionResult = new Object();
-        when(mockBoardRepository.findById(boardId)).thenReturn(Optional.empty());
+        when(mockEntityManager.find(Board.class, boardId)).thenReturn(null);
         doThrow(new IllegalStateException()).when(mockProducer).sendAuditLog(anyString());
 
-        ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+        ProceedingJoinPoint joinPoint = mockJoinPointWithArgs(boardId);
         when(joinPoint.proceed()).thenReturn(deletionResult);
 
-        assertSame(deletionResult, unitAspect.logBoardDeletion(joinPoint, boardId));
+        assertSame(deletionResult, unitAspect.logAuditActivity(joinPoint, mockAuditable));
 
         verify(joinPoint).proceed();
         verify(mockProducer).sendAuditLog(anyString());

@@ -3,9 +3,9 @@ package com.tarakki.boardtask.util;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.entity.BoardMember;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
+import com.tarakki.common.dto.OrgMemberDTO;
 import com.tarakki.boardtask.enums.BoardRole;
-import com.tarakki.boardtask.enums.OrgMemberStatus;
+import com.tarakki.common.enums.MemberStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -55,23 +55,15 @@ public class BoardMemberTestDataFactory {
         orgMemberDTO.setOrgMemberId(ORG_MEMBER_ID);
         orgMemberDTO.setOrgId(ORG_ID);
         orgMemberDTO.setMemberId(MEMBER_ID);
-        orgMemberDTO.setMemberAccountStatus(OrgMemberStatus.ACCEPTED);
-        return orgMemberDTO;
-    }
-
-    /**
-     * An org member who has been invited but has not yet accepted the organization invite.
-     */
-    public static OrgMemberDTO createPendingOrgMemberDto() {
-        OrgMemberDTO orgMemberDTO = createOrgMemberDto();
-        orgMemberDTO.setMemberAccountStatus(OrgMemberStatus.PENDING);
+        orgMemberDTO.setMemberAccountStatus(MemberStatus.ACCEPTED);
         return orgMemberDTO;
     }
 
     public static BoardMemberRequestDTO createBoardMemberRequestDto() {
         BoardMemberRequestDTO requestDTO = new BoardMemberRequestDTO();
         requestDTO.setEmail(EMAIL);
-        requestDTO.setMemberAccountStatus(OrgMemberStatus.ACCEPTED);
+        requestDTO.setCanEdit(CAN_EDIT);
+        requestDTO.setCanView(CAN_VIEW);
         return requestDTO;
     }
 }

@@ -1,6 +1,5 @@
 package com.tarakki.boardtask.dto;
 
-import com.tarakki.boardtask.enums.OrgMemberStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -18,6 +17,10 @@ public class BoardMemberRequestDTO {
     @Email(message = "Please enter a valid email address")
     private String email;
 
-    private OrgMemberStatus memberAccountStatus;
+    @NotNull(message = "CanEdit must not be empty")
+    private Boolean canEdit;
+
+    @NotNull(message = "CanView must not be empty")
+    private Boolean canView;
 
 }

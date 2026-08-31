@@ -8,12 +8,12 @@ import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
-import com.tarakki.boardtask.exception.OrgMemberNotAcceptedException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
+import com.tarakki.common.dto.OrgMemberDTO;
+import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import com.tarakki.boardtask.serviceImpl.BoardMemberServiceImpl;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
@@ -92,10 +92,13 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
-                .thenReturn(orgMemberDTO);
+                .thenReturn(Optional.of(orgMemberDTO));
 
         when(boardMemberRepository.existsByBoardIdAndMemberId(boardId, memberId))
                 .thenReturn(false);
+
+        when(modelMapper.map(any(BoardMemberRequestDTO.class), eq(BoardMemberDTO.class)))
+                .thenReturn(BoardMemberTestDataFactory.createBoardMemberDto());
 
         when(modelMapper.map(any(BoardMemberDTO.class), eq(BoardMember.class)))
                 .thenReturn(boardMemberEntity);
@@ -116,6 +119,7 @@ public class BoardMemberServiceTest {
         verify(boardRepository).findById(boardId);
         verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
         verify(boardMemberRepository).existsByBoardIdAndMemberId(boardId, memberId);
+        verify(modelMapper).map(eq(boardMemberRequestDTO), eq(BoardMemberDTO.class));
         verify(modelMapper).map(boardMemberDtoCaptor.capture(), eq(BoardMember.class));
         verify(boardMemberRepository).save(any(BoardMember.class));
         verify(modelMapper).map(any(BoardMember.class), eq(BoardMemberDTO.class));
@@ -154,7 +158,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, invalidOrgMemberId))
-                .thenReturn(null);
+                .thenReturn(Optional.empty());
 
         OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, invalidOrgMemberId, boardMemberRequestDTO)
@@ -171,20 +175,19 @@ public class BoardMemberServiceTest {
     }
 
     @Test
-    void addMemberToBoard_shouldThrowOrgMemberNotAcceptedExceptionWhenOrgMemberHasNotAcceptedInvite() {
+    void addMemberToBoard_shouldThrowOrganizationNotFoundExceptionWhenOrganizationDoesNotExist() {
 
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
-                .thenReturn(BoardMemberTestDataFactory.createPendingOrgMemberDto());
+                .thenThrow(new OrganizationNotFoundException(orgId));
 
-        OrgMemberNotAcceptedException exception = assertThrows(OrgMemberNotAcceptedException.class,
+        OrganizationNotFoundException exception = assertThrows(OrganizationNotFoundException.class,
                 () -> boardMemberService.addMemberToBoard(boardId, orgMemberId, boardMemberRequestDTO)
         );
 
-        assertEquals("Org member " + orgMemberId + " has not accepted the invite to organization " + orgId,
-                exception.getMessage());
+        assertEquals("Organization with id " + orgId + " not found", exception.getMessage());
 
         verify(boardRepository).findById(boardId);
         verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
@@ -200,7 +203,7 @@ public class BoardMemberServiceTest {
                 .thenReturn(Optional.of(board));
 
         when(orgMemberClient.findOrgMemberById(orgId, orgMemberId))
-                .thenReturn(orgMemberDTO);
+                .thenReturn(Optional.of(orgMemberDTO));
 
         when(boardMemberRepository.existsByBoardIdAndMemberId(boardId, memberId))
                 .thenReturn(true);

@@ -4,11 +4,11 @@ import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
-import com.tarakki.boardtask.exception.OrgMemberNotAcceptedException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.service.BoardMemberService;
 import com.tarakki.boardtask.util.BoardMemberTestDataFactory;
+import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,17 +110,17 @@ public class BoardMemberControllerTest {
     }
 
     @Test
-    void shouldReturnConflictExceptionWhenOrgMemberHasNotAcceptedOrgInvite() throws Exception {
+    void shouldReturnNotFoundWhenOrganizationDoesNotExist() throws Exception {
 
         when(boardMemberService.addMemberToBoard(eq(boardId), eq(orgMemberId), any(BoardMemberRequestDTO.class)))
-                .thenThrow(new OrgMemberNotAcceptedException(orgMemberId, orgId));
+                .thenThrow(new OrganizationNotFoundException(orgId));
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
-                .andExpect(status().isConflict())
+                .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
-                        "Org member " + orgMemberId + " has not accepted the invite to organization " + orgId));
+                        "Organization with id " + orgId + " not found"));
     }
 
     @Test
@@ -155,6 +155,28 @@ public class BoardMemberControllerTest {
     void shouldReturnBadRequestWhenEmailIsMissing() throws Exception {
 
         boardMemberRequestDTO.setEmail(null);
+
+        mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenCanEditIsMissing() throws Exception {
+
+        boardMemberRequestDTO.setCanEdit(null);
+
+        mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenCanViewIsMissing() throws Exception {
+
+        boardMemberRequestDTO.setCanView(null);
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
                         .contentType(MediaType.APPLICATION_JSON)

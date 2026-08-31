@@ -48,11 +48,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
-    @ExceptionHandler(OrgMemberNotAcceptedException.class)
-    public ResponseEntity<String> handleOrgMemberNotAcceptedException(OrgMemberNotAcceptedException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-    }
-
     @ExceptionHandler(BoardMemberExistsException.class)
     public ResponseEntity<String> handleBoardMemberExistsException(BoardMemberExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());

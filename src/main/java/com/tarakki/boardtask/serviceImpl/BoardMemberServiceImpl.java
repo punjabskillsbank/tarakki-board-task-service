@@ -8,20 +8,19 @@ import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
-import com.tarakki.boardtask.exception.OrgMemberNotAcceptedException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.service.BoardMemberService;
-import com.tarakki.boardtask.dto.OrgMemberDTO;
-import com.tarakki.boardtask.enums.OrgMemberStatus;
+import com.tarakki.common.dto.OrgMemberDTO;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -42,29 +41,19 @@ public class BoardMemberServiceImpl implements BoardMemberService {
 
         Long orgId = board.getOrgId();
 
-        OrgMemberDTO orgMember = findOrgMember(orgId, orgMemberId);
+        OrgMemberDTO orgMemberDTO = findOrgMember(orgId, orgMemberId)
+                .orElseThrow(() -> new OrgMemberNotFoundException(orgMemberId, orgId));
 
-        if (orgMember == null) {
-            throw new OrgMemberNotFoundException(orgMemberId, orgId);
-        }
-
-        if (!isAcceptedInOrg(orgMember)) {
-            throw new OrgMemberNotAcceptedException(orgMemberId, orgId);
-        }
-
-        UUID memberId = orgMember.getMemberId();
+        UUID memberId = orgMemberDTO.getMemberId();
 
         if (isAlreadyOnBoard(boardId, memberId)) {
             throw new BoardMemberExistsException(memberId, boardId);
         }
 
-        BoardMemberDTO boardMemberDTO = BoardMemberDTO.builder()
-                .boardId(boardId)
-                .memberId(memberId)
-                .role(BoardRole.MEMBER)
-                .canEdit(false)
-                .canView(true)
-                .build();
+        BoardMemberDTO boardMemberDTO = modelMapper.map(request, BoardMemberDTO.class);
+        boardMemberDTO.setBoardId(boardId);
+        boardMemberDTO.setMemberId(memberId);
+        boardMemberDTO.setRole(BoardRole.MEMBER);
 
         BoardMember boardMember = modelMapper.map(boardMemberDTO, BoardMember.class);
 
@@ -73,16 +62,12 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         return modelMapper.map(savedBoardMember, BoardMemberDTO.class);
     }
 
-    private OrgMemberDTO findOrgMember(Long orgId, Long orgMemberId) {
+    private Optional<OrgMemberDTO> findOrgMember(Long orgId, Long orgMemberId) {
         try {
             return orgMemberClient.findOrgMemberById(orgId, orgMemberId);
         } catch (RestClientException exception) {
             throw new OrgServiceUnavailableException(orgId);
         }
-    }
-
-    private boolean isAcceptedInOrg(OrgMemberDTO orgMember) {
-        return orgMember.getMemberAccountStatus() == OrgMemberStatus.ACCEPTED;
     }
 
     private boolean isAlreadyOnBoard(Long boardId, UUID memberId) {

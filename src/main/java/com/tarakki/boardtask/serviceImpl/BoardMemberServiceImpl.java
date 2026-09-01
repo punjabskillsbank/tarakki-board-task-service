@@ -20,7 +20,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -41,8 +40,7 @@ public class BoardMemberServiceImpl implements BoardMemberService {
 
         Long orgId = board.getOrgId();
 
-        OrgMemberDTO orgMemberDTO = findOrgMember(orgId, orgMemberId)
-                .orElseThrow(() -> new OrgMemberNotFoundException(orgMemberId, orgId));
+        OrgMemberDTO orgMemberDTO = findOrgMember(orgId, orgMemberId);
 
         UUID memberId = orgMemberDTO.getMemberId();
 
@@ -62,9 +60,10 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         return modelMapper.map(savedBoardMember, BoardMemberDTO.class);
     }
 
-    private Optional<OrgMemberDTO> findOrgMember(Long orgId, Long orgMemberId) {
+    private OrgMemberDTO findOrgMember(Long orgId, Long orgMemberId) {
         try {
-            return orgMemberClient.findOrgMemberById(orgId, orgMemberId);
+            return orgMemberClient.findOrgMemberById(orgId, orgMemberId)
+                    .orElseThrow(() -> new OrgMemberNotFoundException(orgMemberId, orgId));
         } catch (RestClientException exception) {
             throw new OrgServiceUnavailableException(orgId);
         }

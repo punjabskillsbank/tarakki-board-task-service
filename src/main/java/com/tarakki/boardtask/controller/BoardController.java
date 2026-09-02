@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.tarakki.boardtask.annotation.Auditable;
+import com.tarakki.common.audit.annotation.Auditable;
 import com.tarakki.boardtask.entity.Board;
 
 import java.util.List;

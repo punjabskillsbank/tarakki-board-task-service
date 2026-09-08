@@ -55,7 +55,7 @@ jobs:
           EOF
 
       - name: Run all JUnit tests
-        run: mvn test
+        run: mvn test -U
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/tarakki_local
           SPRING_DATASOURCE_USERNAME: tarakki

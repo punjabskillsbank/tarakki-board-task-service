@@ -3,6 +3,8 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.service.TaskService;
+import com.tarakki.boardtask.entity.Task;
+import com.tarakki.common.audit.annotation.Auditable;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,18 +19,21 @@ import java.util.List;
 public class TaskController {
     private final TaskService taskService;
 
+    @Auditable(eventName = "TASK_CREATED", entityName = "TASK", entityClass = Task.class, entityIdResultSpel = "body.taskId")
     @PostMapping
     public ResponseEntity<TaskDTO> createTaskByBoardId(@Valid @RequestBody TaskDTO taskDTO, @PathVariable Long boardId) {
         TaskDTO result = taskService.createTaskByBoardId(taskDTO, boardId);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
+    @Auditable(eventName = "TASK_LIST_FETCHED", entityName = "BOARD", entityIdArgSpel = "#boardId")
     @GetMapping
     public ResponseEntity<List<TaskDTO>> getTasksByBoardId(@PathVariable Long boardId) {
         List<TaskDTO> result = taskService.getTasksByBoardId(boardId);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    @Auditable(eventName = "TASK_UPDATED", entityName = "TASK", entityClass = Task.class, entityIdArgSpel = "#taskId")
     @PatchMapping("/{taskId}")
     public ResponseEntity<TaskDTO> patchTaskById(
             @PathVariable Long boardId,

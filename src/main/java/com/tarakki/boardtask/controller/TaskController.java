@@ -19,14 +19,12 @@ import java.util.List;
 public class TaskController {
     private final TaskService taskService;
 
-    @Auditable(eventName = "TASK_CREATED", entityName = "TASK", entityClass = Task.class, entityIdResultSpel = "body.taskId")
     @PostMapping
     public ResponseEntity<TaskDTO> createTaskByBoardId(@Valid @RequestBody TaskDTO taskDTO, @PathVariable Long boardId) {
         TaskDTO result = taskService.createTaskByBoardId(taskDTO, boardId);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
-    @Auditable(eventName = "TASK_LIST_FETCHED", entityName = "BOARD", entityIdArgSpel = "#boardId")
     @GetMapping
     public ResponseEntity<List<TaskDTO>> getTasksByBoardId(@PathVariable Long boardId) {
         List<TaskDTO> result = taskService.getTasksByBoardId(boardId);

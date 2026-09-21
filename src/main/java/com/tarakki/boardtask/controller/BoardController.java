@@ -20,7 +20,6 @@ public class BoardController {
 
     private final BoardService boardService;
 
-    @Auditable(eventName = "BOARD_CREATED", entityName = "BOARD", entityClass = Board.class, entityIdResultSpel = "body.boardId")
     @PostMapping
     public ResponseEntity<BoardDTO> createBoard(@Valid @RequestBody BoardDTO boardDTO) {
 
@@ -35,7 +34,6 @@ public class BoardController {
         return ResponseEntity.noContent().build();
     }
     
-    @Auditable(eventName = "BOARD_LIST_FETCHED", entityName = "ORGANIZATION", entityIdArgSpel = "#orgId")
     @GetMapping("/organization/{orgId}")
     public ResponseEntity<List<BoardDTO>> getBoardsByOrganization(@PathVariable Long orgId) {
 
@@ -43,7 +41,6 @@ public class BoardController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @Auditable(eventName = "BOARD_FETCHED", entityName = "BOARD", entityIdArgSpel = "#boardId")
     @GetMapping("/{boardId}")
     public ResponseEntity<BoardDTO> getBoardById(@PathVariable("boardId") Long boardId) {
         BoardDTO boardDTO = boardService.getBoardById(boardId);

@@ -3,8 +3,6 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 import com.tarakki.boardtask.service.BoardMemberService;
-import com.tarakki.boardtask.entity.BoardMember;
-import com.tarakki.common.audit.annotation.Auditable;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,7 +16,6 @@ public class BoardMemberController {
 
     private final BoardMemberService boardMemberService;
 
-    @Auditable(eventName = "BOARD_MEMBER_ADDED", entityName = "BOARD_MEMBER", entityClass = BoardMember.class, entityIdResultSpel = "body.boardMemberId")
     @PostMapping("/{orgMemberId}")
     public ResponseEntity<BoardMemberDTO> addMemberToBoard(@PathVariable Long boardId,
                                                            @PathVariable Long orgMemberId,

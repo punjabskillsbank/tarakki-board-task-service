@@ -12,6 +12,8 @@ import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class GroupServiceImpl implements GroupService {
@@ -33,6 +35,18 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
 
         return modelMapper.map(group, GroupDTO.class);
+    }
+
+    @Override
+    public List<GroupDTO> getGroupsByBoardId(Long boardId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        List<Group> groups = groupRepository.findByBoardId(boardId);
+
+        return groups.stream()
+                .map(group -> modelMapper.map(group, GroupDTO.class))
+                .toList();
     }
 
     private boolean isPositionOccupied(Long boardId, Integer position) {

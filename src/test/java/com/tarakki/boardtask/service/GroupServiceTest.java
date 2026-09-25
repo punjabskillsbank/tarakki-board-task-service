@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -128,6 +129,66 @@ public class GroupServiceTest {
         verify(boardRepository).findById(boardId);
         verify(groupRepository).existsByBoardIdAndPosition(boardId, position);
         verify(groupRepository, never()).save(any(Group.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void shouldGetGroupsByBoardId() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(groupRepository.findByBoardId(boardId))
+                .thenReturn(List.of(groupEntity));
+
+        when(modelMapper.map(any(Group.class), eq(GroupDTO.class)))
+                .thenReturn(groupDTO);
+
+        List<GroupDTO> result = groupService.getGroupsByBoardId(boardId);
+
+        assertEquals(1, result.size());
+        assertEquals(groupDTO.getBoardId(), result.get(0).getBoardId());
+        assertEquals(groupDTO.getGroupName(), result.get(0).getGroupName());
+        assertEquals(groupDTO.getPosition(), result.get(0).getPosition());
+        assertEquals(groupDTO.getCreatedBy(), result.get(0).getCreatedBy());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findByBoardId(boardId);
+        verify(modelMapper).map(any(Group.class), eq(GroupDTO.class));
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoGroupsExistForBoard() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(groupRepository.findByBoardId(boardId))
+                .thenReturn(List.of());
+
+        List<GroupDTO> result = groupService.getGroupsByBoardId(boardId);
+
+        assertTrue(result.isEmpty());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findByBoardId(boardId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenGettingGroupsForUnknownBoard() {
+
+        when(boardRepository.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> groupService.getGroupsByBoardId(invalidBoardId)
+        );
+
+        assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(groupRepository, never()).findByBoardId(anyLong());
         verify(modelMapper, never()).map(any(), any());
     }
 }

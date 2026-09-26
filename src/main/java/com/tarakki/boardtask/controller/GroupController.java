@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/boards/{boardId}/groups")
 @AllArgsConstructor
@@ -18,5 +20,11 @@ public class GroupController {
     public ResponseEntity<GroupDTO> createGroupByBoardId(@Valid @RequestBody GroupDTO groupDTO, @PathVariable Long boardId) {
         GroupDTO result = groupService.createGroupByBoardId(groupDTO, boardId);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GroupDTO>> getGroupsByBoardId(@PathVariable Long boardId) {
+        List<GroupDTO> result = groupService.getGroupsByBoardId(boardId);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

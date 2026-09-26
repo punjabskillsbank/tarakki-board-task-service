@@ -15,9 +15,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -130,5 +134,50 @@ public class GroupControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldGetGroupsByBoardId() throws Exception {
+
+        when(groupService.getGroupsByBoardId(boardId))
+                .thenReturn(List.of(groupDto));
+
+        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].groupId").value(groupDto.getGroupId()))
+                .andExpect(jsonPath("$[0].boardId").value(groupDto.getBoardId()))
+                .andExpect(jsonPath("$[0].groupName").value(groupDto.getGroupName()))
+                .andExpect(jsonPath("$[0].position").value(groupDto.getPosition()))
+                .andExpect(jsonPath("$[0].createdBy").value(groupDto.getCreatedBy().toString()));
+
+        verify(groupService).getGroupsByBoardId(boardId);
+    }
+
+    @Test
+    void shouldGetEmptyListWhenBoardHasNoGroups() throws Exception {
+
+        when(groupService.getGroupsByBoardId(boardId))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(groupService).getGroupsByBoardId(boardId);
+    }
+
+    @Test
+    void shouldReturnNotFoundExceptionWhenGettingGroupsForUnknownBoardId() throws Exception {
+
+        when(groupService.getGroupsByBoardId(boardId))
+                .thenThrow(new BoardNotFoundException(boardId));
+
+        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Board not found with id: " + boardId));
+
+        verify(groupService).getGroupsByBoardId(boardId);
     }
 }

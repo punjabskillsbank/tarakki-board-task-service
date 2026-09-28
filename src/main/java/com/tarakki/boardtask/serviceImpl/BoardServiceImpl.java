@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
@@ -57,4 +58,22 @@ public class BoardServiceImpl implements BoardService {
         return modelMapper.map(board, BoardDTO.class);
     }
 
+    @Override
+    @Transactional
+    public BoardDTO patchBoardById(Long boardId, BoardUpdateDTO boardUpdateDTO) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        if (boardUpdateDTO.getBoardName() != null) {
+            board.setBoardName(boardUpdateDTO.getBoardName());
+        }
+        if (boardUpdateDTO.getBoardDesc() != null) {
+            board.setBoardDesc(boardUpdateDTO.getBoardDesc());
+        }
+
+        Board updatedBoard = boardRepository.save(board);
+        return modelMapper.map(updatedBoard, BoardDTO.class);
+    }
+
 }
+

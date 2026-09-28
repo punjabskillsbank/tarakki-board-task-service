@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.service.BoardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,4 +47,14 @@ public class BoardController {
         BoardDTO boardDTO = boardService.getBoardById(boardId);
         return ResponseEntity.ok(boardDTO);
     }
+
+    @Auditable(eventName = "BOARD_UPDATED", entityName = "BOARD", entityClass = Board.class, entityIdArgSpel = "#boardId")
+    @PatchMapping("/{boardId}")
+    public ResponseEntity<BoardDTO> patchBoardById(
+            @PathVariable Long boardId,
+            @RequestBody BoardUpdateDTO boardUpdateDTO) {
+        BoardDTO updatedBoard = boardService.patchBoardById(boardId, boardUpdateDTO);
+        return ResponseEntity.ok(updatedBoard);
+    }
 }
+

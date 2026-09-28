@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -187,4 +189,39 @@ class BoardControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void shouldPatchBoardByIdAndReturn200Ok() throws Exception {
+        Long boardId = EXISTING_BOARD_ID;
+        BoardUpdateDTO updateDTO = BoardTestDataFactory.createBoardUpdateDTO();
+        BoardDTO patchedDTO = BoardTestDataFactory.createBoardDTOWithId();
+        patchedDTO.setBoardName(updateDTO.getBoardName());
+        patchedDTO.setBoardDesc(updateDTO.getBoardDesc());
+
+        when(boardService.patchBoardById(eq(boardId), any(BoardUpdateDTO.class)))
+                .thenReturn(patchedDTO);
+
+        mockMvc.perform(patch("/api/boards/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.boardId").value(patchedDTO.getBoardId()))
+                .andExpect(jsonPath("$.boardName").value(updateDTO.getBoardName()))
+                .andExpect(jsonPath("$.boardDesc").value(updateDTO.getBoardDesc()));
+    }
+
+    @Test
+    void shouldPatchBoardByIdAndReturn404WhenNotFound() throws Exception {
+        Long boardId = MISSING_BOARD_ID;
+        BoardUpdateDTO updateDTO = BoardTestDataFactory.createBoardUpdateDTO();
+
+        when(boardService.patchBoardById(eq(boardId), any(BoardUpdateDTO.class)))
+                .thenThrow(new com.tarakki.boardtask.exception.BoardNotFoundException(boardId));
+
+        mockMvc.perform(patch("/api/boards/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isNotFound());
+    }
+
 }
+

@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
@@ -183,4 +184,46 @@ class BoardServiceTest {
         verify(boardRepository).findById(missingBoardId);
         verify(modelMapper, never()).map(any(), any());
     }
+
+    @Test
+    void shouldPatchBoardByIdSuccessfully() {
+        BoardUpdateDTO updateDTO = BoardTestDataFactory.createBoardUpdateDTO();
+        BoardDTO patchedDTO = BoardTestDataFactory.createBoardDTOWithId();
+        patchedDTO.setBoardName(updateDTO.getBoardName());
+        patchedDTO.setBoardDesc(updateDTO.getBoardDesc());
+
+        when(boardRepository.findById(existingBoardId))
+                .thenReturn(Optional.of(board));
+        when(boardRepository.save(any(Board.class)))
+                .thenReturn(board);
+        doNothing().when(modelMapper).map(any(BoardUpdateDTO.class), any(Board.class));
+        when(modelMapper.map(board, BoardDTO.class))
+                .thenReturn(patchedDTO);
+
+        BoardDTO result = boardService.patchBoardById(existingBoardId, updateDTO);
+
+        assertNotNull(result);
+        assertEquals(updateDTO.getBoardName(), result.getBoardName());
+        assertEquals(updateDTO.getBoardDesc(), result.getBoardDesc());
+        verify(boardRepository).findById(existingBoardId);
+        verify(modelMapper).map(updateDTO, board);
+        verify(boardRepository).save(board);
+        verify(modelMapper).map(board, BoardDTO.class);
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenPatchingNonExistentBoard() {
+        BoardUpdateDTO updateDTO = BoardTestDataFactory.createBoardUpdateDTO();
+
+        when(boardRepository.findById(missingBoardId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(BoardNotFoundException.class, () -> {
+            boardService.patchBoardById(missingBoardId, updateDTO);
+        });
+
+        verify(boardRepository).findById(missingBoardId);
+        verify(boardRepository, never()).save(any());
+    }
 }
+

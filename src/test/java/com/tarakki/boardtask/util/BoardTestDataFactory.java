@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.util;
 
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 
 import java.util.UUID;
@@ -44,6 +45,13 @@ public class BoardTestDataFactory {
         return dto;
     }
 
+    public static BoardUpdateDTO createBoardUpdateDTO() {
+        BoardUpdateDTO updateDTO = new BoardUpdateDTO();
+        updateDTO.setBoardName("Updated Board Name");
+        updateDTO.setBoardDesc("Updated Board Description");
+        return updateDTO;
+    }
+
 
     public static Board createBoardEntity() {
         Board board = new Board();
@@ -73,3 +81,4 @@ public class BoardTestDataFactory {
         return board;
     }
 }
+

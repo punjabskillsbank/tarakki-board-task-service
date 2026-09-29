@@ -64,12 +64,7 @@ public class BoardServiceImpl implements BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
 
-        if (boardUpdateDTO.getBoardName() != null) {
-            board.setBoardName(boardUpdateDTO.getBoardName());
-        }
-        if (boardUpdateDTO.getBoardDesc() != null) {
-            board.setBoardDesc(boardUpdateDTO.getBoardDesc());
-        }
+        modelMapper.map(boardUpdateDTO, board);
 
         Board updatedBoard = boardRepository.save(board);
         return modelMapper.map(updatedBoard, BoardDTO.class);

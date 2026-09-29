@@ -196,6 +196,7 @@ class BoardServiceTest {
                 .thenReturn(Optional.of(board));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(board);
+        doNothing().when(modelMapper).map(any(BoardUpdateDTO.class), any(Board.class));
         when(modelMapper.map(board, BoardDTO.class))
                 .thenReturn(patchedDTO);
 
@@ -205,6 +206,7 @@ class BoardServiceTest {
         assertEquals(updateDTO.getBoardName(), result.getBoardName());
         assertEquals(updateDTO.getBoardDesc(), result.getBoardDesc());
         verify(boardRepository).findById(existingBoardId);
+        verify(modelMapper).map(updateDTO, board);
         verify(boardRepository).save(board);
         verify(modelMapper).map(board, BoardDTO.class);
     }

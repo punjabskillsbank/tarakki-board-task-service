@@ -49,6 +49,12 @@ public class GroupServiceImpl implements GroupService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public void deleteGroup(Long groupId) {
+        groupRepository.deleteById(groupId);
+    }
+
     private boolean isPositionOccupied(Long boardId, Integer position) {
         return groupRepository.existsByBoardIdAndPosition(boardId, position);
     }

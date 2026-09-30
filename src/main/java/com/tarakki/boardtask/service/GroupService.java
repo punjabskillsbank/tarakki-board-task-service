@@ -8,4 +8,6 @@ public interface GroupService {
     GroupDTO createGroupByBoardId(GroupDTO groupDTO, Long boardId);
 
     List<GroupDTO> getGroupsByBoardId(Long boardId);
+
+    void deleteGroup(Long groupId);
 }

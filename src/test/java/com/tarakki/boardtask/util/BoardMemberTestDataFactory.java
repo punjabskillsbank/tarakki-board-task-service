@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public class BoardMemberTestDataFactory {
     public static final Long BOARD_MEMBER_ID = 1L;
+    public static final Long INVALID_BOARD_MEMBER_ID = 999L;
     public static final Long BOARD_ID = 1L;
     public static final Long INVALID_BOARD_ID = 999L;
     public static final Long ORG_ID = 1L;

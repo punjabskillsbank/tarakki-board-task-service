@@ -23,4 +23,11 @@ public class BoardMemberController {
         BoardMemberDTO result = boardMemberService.addMemberToBoard(boardId, orgMemberId, request);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
+
+    @GetMapping("/{boardMemberId}")
+    public ResponseEntity<BoardMemberDTO> getBoardMemberById(@PathVariable Long boardId,
+                                                             @PathVariable Long boardMemberId) {
+        BoardMemberDTO result = boardMemberService.getBoardMemberById(boardId, boardMemberId);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }

@@ -7,6 +7,7 @@ import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
+import com.tarakki.boardtask.exception.BoardMemberNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
@@ -65,6 +66,8 @@ public class BoardMemberServiceTest {
     private BoardMemberRequestDTO boardMemberRequestDTO;
     private Long boardId;
     private Long invalidBoardId;
+    private Long boardMemberId;
+    private Long invalidBoardMemberId;
     private Long orgId;
     private Long orgMemberId;
     private Long invalidOrgMemberId;
@@ -79,6 +82,8 @@ public class BoardMemberServiceTest {
         boardMemberRequestDTO = BoardMemberTestDataFactory.createBoardMemberRequestDto();
         boardId = BoardMemberTestDataFactory.BOARD_ID;
         invalidBoardId = BoardMemberTestDataFactory.INVALID_BOARD_ID;
+        boardMemberId = BoardMemberTestDataFactory.BOARD_MEMBER_ID;
+        invalidBoardMemberId = BoardMemberTestDataFactory.INVALID_BOARD_MEMBER_ID;
         orgId = BoardMemberTestDataFactory.ORG_ID;
         orgMemberId = BoardMemberTestDataFactory.ORG_MEMBER_ID;
         invalidOrgMemberId = BoardMemberTestDataFactory.INVALID_ORG_MEMBER_ID;
@@ -242,6 +247,67 @@ public class BoardMemberServiceTest {
         verify(orgMemberClient).findOrgMemberById(orgId, orgMemberId);
         verify(boardMemberRepository, never()).existsByBoardIdAndMemberId(anyLong(), any(UUID.class));
         verify(boardMemberRepository, never()).save(any(BoardMember.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void getBoardMemberById_shouldReturnBoardMemberWhenExists() {
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(boardMemberEntity));
+
+        when(modelMapper.map(any(BoardMember.class), eq(BoardMemberDTO.class)))
+                .thenReturn(boardMemberDTO);
+
+        BoardMemberDTO result = boardMemberService.getBoardMemberById(boardId, boardMemberId);
+
+        assertNotNull(result);
+        assertEquals(boardMemberDTO.getBoardMemberId(), result.getBoardMemberId());
+        assertEquals(boardMemberDTO.getBoardId(), result.getBoardId());
+        assertEquals(boardMemberDTO.getMemberId(), result.getMemberId());
+        assertEquals(boardMemberDTO.getRole(), result.getRole());
+        assertEquals(boardMemberDTO.getCanEdit(), result.getCanEdit());
+        assertEquals(boardMemberDTO.getCanView(), result.getCanView());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(modelMapper).map(boardMemberEntity, BoardMemberDTO.class);
+    }
+
+    @Test
+    void getBoardMemberById_shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
+        when(boardRepository.findById(invalidBoardId))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> boardMemberService.getBoardMemberById(invalidBoardId, boardMemberId)
+        );
+
+        assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(boardMemberRepository, never()).findById(anyLong());
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void getBoardMemberById_shouldThrowBoardMemberNotFoundExceptionWhenBoardMemberDoesNotExist() {
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+
+        when(boardMemberRepository.findById(invalidBoardMemberId))
+                .thenReturn(Optional.empty());
+
+        BoardMemberNotFoundException exception = assertThrows(BoardMemberNotFoundException.class,
+                () -> boardMemberService.getBoardMemberById(boardId, invalidBoardMemberId)
+        );
+
+        assertEquals("Board member not found with id: " + invalidBoardMemberId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(invalidBoardMemberId);
         verify(modelMapper, never()).map(any(), any());
     }
 }

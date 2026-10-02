@@ -3,6 +3,7 @@ package com.tarakki.boardtask.serviceImpl;
 import com.tarakki.boardtask.dto.GroupDTO;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.GroupNotFoundException;
 import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.GroupRepository;
@@ -51,7 +52,11 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public void deleteGroup(Long groupId) {
+    public void deleteGroup(Long groupId ,Long boardId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+        groupRepository.findById(groupId)
+                .orElseThrow(()-> new GroupNotFoundException(groupId));
         groupRepository.deleteById(groupId);
     }
 

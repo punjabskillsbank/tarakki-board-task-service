@@ -186,23 +186,23 @@ public class GroupControllerTest {
 
     @Test
     void shouldDeleteGroupById() throws Exception {
-        doNothing().when(groupService).deleteGroup(groupDto.getGroupId());
+        doNothing().when(groupService).deleteGroup(groupDto.getGroupId(), boardId);
 
         mockMvc.perform((delete("/api/boards/{boardId}/groups/{groupId}", EXISTING_BOARD_ID, groupDto.getGroupId())))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
-        verify(groupService).deleteGroup(groupDto.getGroupId());
+        verify(groupService).deleteGroup(groupDto.getGroupId(), boardId);
     }
 
     @Test
     void shouldReturnNoContentWhenGroupDoesNotExist() throws Exception {
-        doNothing().when(groupService).deleteGroup(invalidGroupId);
+        doNothing().when(groupService).deleteGroup(invalidGroupId, boardId);
 
         mockMvc.perform(delete("/api/boards/{boardId}/groups/{groupId}", EXISTING_BOARD_ID, invalidGroupId))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
-        verify(groupService).deleteGroup(invalidGroupId);
+        verify(groupService).deleteGroup(invalidGroupId, boardId);
 
     }
 

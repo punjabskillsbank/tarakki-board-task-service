@@ -9,5 +9,5 @@ public interface GroupService {
 
     List<GroupDTO> getGroupsByBoardId(Long boardId);
 
-    void deleteGroup(Long groupId);
+    void deleteGroup(Long groupId ,Long boardId);
 }

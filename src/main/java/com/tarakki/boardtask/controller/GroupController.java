@@ -32,8 +32,8 @@ public class GroupController {
 
     @Auditable(eventName = "DELETE_GROUP", entityName = "GROUP", entityClass = Group.class, entityIdArgSpel = "#groupId")
     @DeleteMapping("/{groupId}")
-    public ResponseEntity<Void> deleteGroup(@PathVariable Long groupId, @PathVariable String boardId) {
-        groupService.deleteGroup(groupId);
+    public ResponseEntity<Void> deleteGroup(@PathVariable Long groupId, @PathVariable Long boardId) {
+        groupService.deleteGroup(groupId, boardId);
         return ResponseEntity.noContent().build();
     }
 

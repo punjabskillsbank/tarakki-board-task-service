@@ -30,7 +30,7 @@ public class GroupController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @Auditable(eventName = "DELETE_GROUP", entityName = "GROUP", entityClass = Group.class, entityIdArgSpel = "#groupId")
+    @Auditable(eventName = "GROUP_DELETED", entityName = "GROUP", entityClass = Group.class, entityIdArgSpel = "#groupId")
     @DeleteMapping("/{groupId}")
     public ResponseEntity<Void> deleteGroup(@PathVariable Long groupId, @PathVariable Long boardId) {
         groupService.deleteGroup(groupId, boardId);

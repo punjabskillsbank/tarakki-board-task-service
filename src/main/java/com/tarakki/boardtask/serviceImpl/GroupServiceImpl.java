@@ -52,12 +52,15 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public void deleteGroup(Long groupId ,Long boardId) {
+    public void deleteGroup(Long groupId, Long boardId) {
         boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
-        groupRepository.findById(groupId)
-                .orElseThrow(()-> new GroupNotFoundException(groupId));
-        groupRepository.deleteById(groupId);
+
+        Group group = groupRepository.findById(groupId)
+                .filter((g) -> g.getBoardId().equals(boardId))
+                .orElseThrow(() -> new GroupNotFoundException(groupId));
+
+        groupRepository.delete(group);
     }
 
     private boolean isPositionOccupied(Long boardId, Integer position) {

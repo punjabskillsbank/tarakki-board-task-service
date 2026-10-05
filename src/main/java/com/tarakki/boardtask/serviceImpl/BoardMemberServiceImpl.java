@@ -67,6 +67,7 @@ public class BoardMemberServiceImpl implements BoardMemberService {
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
 
         BoardMember boardMember = boardMemberRepository.findById(boardMemberId)
+                .filter(member -> member.getBoardId().equals(boardId))
                 .orElseThrow(() -> new BoardMemberNotFoundException(boardMemberId));
 
         return modelMapper.map(boardMember, BoardMemberDTO.class);

@@ -310,4 +310,26 @@ public class BoardMemberServiceTest {
         verify(boardMemberRepository).findById(invalidBoardMemberId);
         verify(modelMapper, never()).map(any(), any());
     }
+
+    @Test
+    void getBoardMemberById_shouldThrowBoardMemberNotFoundExceptionWhenBoardMemberDoesNotBelongToBoard() {
+        BoardMember memberFromDifferentBoard = BoardMemberTestDataFactory.createBoardMemberEntity();
+        memberFromDifferentBoard.setBoardId(999L);
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(memberFromDifferentBoard));
+
+        BoardMemberNotFoundException exception = assertThrows(BoardMemberNotFoundException.class,
+                () -> boardMemberService.getBoardMemberById(boardId, boardMemberId)
+        );
+
+        assertEquals("Board member not found with id: " + boardMemberId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(modelMapper, never()).map(any(), any());
+    }
 }

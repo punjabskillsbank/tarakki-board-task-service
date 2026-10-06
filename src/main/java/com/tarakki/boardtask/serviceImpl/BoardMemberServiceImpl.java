@@ -7,6 +7,7 @@ import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
+import com.tarakki.boardtask.exception.BoardMemberNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
@@ -58,6 +59,18 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         BoardMember savedBoardMember = boardMemberRepository.save(boardMember);
 
         return modelMapper.map(savedBoardMember, BoardMemberDTO.class);
+    }
+
+    @Override
+    public BoardMemberDTO getBoardMemberById(Long boardId, Long boardMemberId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        BoardMember boardMember = boardMemberRepository.findById(boardMemberId)
+                .filter(member -> member.getBoardId().equals(boardId))
+                .orElseThrow(() -> new BoardMemberNotFoundException(boardMemberId));
+
+        return modelMapper.map(boardMember, BoardMemberDTO.class);
     }
 
     private OrgMemberDTO findOrgMember(Long orgId, Long orgMemberId) {

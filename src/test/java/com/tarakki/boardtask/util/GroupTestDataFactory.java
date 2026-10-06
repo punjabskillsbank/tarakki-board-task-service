@@ -14,6 +14,7 @@ public class GroupTestDataFactory {
     public static final UUID CREATED_BY = UUID.randomUUID();
     public static final Long BOARD_ID = 1L;
     public static final Long INVALID_BOARD_ID = 999L;
+    public static final Long INVALID_GROUP_ID = 9L;
     public static final LocalDateTime CREATED_AT = LocalDateTime.now();
     public static final LocalDateTime UPDATED_AT = LocalDateTime.now();
 

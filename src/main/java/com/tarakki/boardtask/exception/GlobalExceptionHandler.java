@@ -53,8 +53,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
+    @ExceptionHandler(BoardMemberNotFoundException.class)
+    public ResponseEntity<String> handleBoardMemberNotFoundException(BoardMemberNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
     @ExceptionHandler(OrgServiceUnavailableException.class)
     public ResponseEntity<String> handleOrgServiceUnavailableException(OrgServiceUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(GroupNotFoundException.class)
+    public ResponseEntity<String> handleGroupNotFoundException(GroupNotFoundException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }

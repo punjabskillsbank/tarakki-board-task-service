@@ -56,6 +56,8 @@ public class GroupServiceTest {
     private Long invalidBoardId;
     private Integer position;
     private Board board;
+    private Long groupId;
+    private Long invalidGroupId;
 
     @BeforeEach
     void setUp() {
@@ -65,6 +67,8 @@ public class GroupServiceTest {
         invalidBoardId = GroupTestDataFactory.INVALID_BOARD_ID;
         position = GroupTestDataFactory.POSITION;
         board = BoardTestDataFactory.createBoardEntity();
+        groupId = GroupTestDataFactory.GROUP_ID;
+        invalidGroupId = GroupTestDataFactory.INVALID_GROUP_ID;
     }
 
     @Test
@@ -285,4 +289,16 @@ public class GroupServiceTest {
         verify(groupRepository, never()).findByBoardId(anyLong());
         verify(modelMapper, never()).map(any(), any());
     }
+
+    @Test
+    void shouldDeleteGroup() {
+
+        groupRepository.deleteById(groupId);
+
+        verify(groupRepository).deleteById(groupId);
+        verify(groupRepository, never()).existsById(anyLong());
+        verify(groupRepository, never()).deleteById(invalidGroupId);
+
+    }
+
 }

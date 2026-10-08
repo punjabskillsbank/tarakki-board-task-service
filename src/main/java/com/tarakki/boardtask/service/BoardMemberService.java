@@ -6,4 +6,6 @@ import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
 public interface BoardMemberService {
 
     BoardMemberDTO addMemberToBoard(Long boardId, Long orgMemberId, BoardMemberRequestDTO request);
+
+    BoardMemberDTO getBoardMemberById(Long boardId, Long boardMemberId);
 }

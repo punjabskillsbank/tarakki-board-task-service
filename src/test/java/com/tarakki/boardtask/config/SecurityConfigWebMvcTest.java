@@ -7,11 +7,13 @@ import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.boardtask.util.JwtTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -19,15 +21,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -54,6 +60,9 @@ class SecurityConfigWebMvcTest {
 
     @Autowired
     private WebApplicationContext context;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private BoardService boardService;
@@ -86,6 +95,31 @@ class SecurityConfigWebMvcTest {
                 .andExpect(jsonPath("$.boardId").value(board.getBoardId()));
 
         verify(boardService).getBoardById(boardId);
+    }
+
+    @Test
+    void shouldCreateBoardAsTheMemberInTheTokenEvenWhenTheBodyNamesSomeoneElse() throws Exception {
+        BoardDTO request = BoardTestDataFactory.createBoardDTO();
+        request.setCreatedBy(UUID.randomUUID());
+        when(boardService.createBoard(any())).thenReturn(board);
+
+        mockMvc.perform(post("/api/boards")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(JwtTestDataFactory.createValidToken(memberId)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<BoardDTO> sentToService = ArgumentCaptor.forClass(BoardDTO.class);
+        verify(boardService).createBoard(sentToService.capture());
+        assertEquals(memberId, sentToService.getValue().getCreatedBy());
+    }
+
+    @Test
+    void shouldRejectCreateWhenTokenSubjectIsNotAMemberId() throws Exception {
+        assertRejected(post("/api/boards")
+                .header(HttpHeaders.AUTHORIZATION, bearer(JwtTestDataFactory.createValidTokenWithSubject("not-a-member-id")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(BoardTestDataFactory.createBoardDTO())));
     }
 
     @Test

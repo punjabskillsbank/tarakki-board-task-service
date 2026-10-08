@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -38,8 +39,11 @@ import static com.tarakki.boardtask.util.BoardTestDataFactory.MISSING_BOARD_ID;
 
 @WebMvcTest(BoardController.class)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser(username = BoardControllerTest.MEMBER_ID_VALUE)
 class BoardControllerTest {
 
+    static final String MEMBER_ID_VALUE = "c0ffee00-0000-4000-8000-000000000001";
+    private static final UUID MEMBER_ID = UUID.fromString(MEMBER_ID_VALUE);
 
 
     @Autowired
@@ -58,6 +62,23 @@ class BoardControllerTest {
     void setUp() {
         input = BoardTestDataFactory.createBoardDTO();
         output = BoardTestDataFactory.createBoardDTOWithId();
+    }
+
+    @Test
+    void shouldSetCreatedByFromTheTokenAndIgnoreTheOneInTheBody() throws Exception {
+
+        when(boardService.createBoard(any())).thenReturn(output);
+        input.setCreatedBy(UUID.randomUUID());
+
+        mockMvc.perform(post("/api/boards")
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<BoardDTO> sentToService = ArgumentCaptor.forClass(BoardDTO.class);
+        verify(boardService).createBoard(sentToService.capture());
+        assertEquals(MEMBER_ID, sentToService.getValue().getCreatedBy());
     }
 
     @Test
@@ -266,14 +287,5 @@ class BoardControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    @Test
-    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
-
-        input.setCreatedBy(null);
-
-        mockMvc.perform(post("/api/boards")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest());
-    }
 }
+

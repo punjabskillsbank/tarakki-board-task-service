@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -36,8 +37,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(GroupController.class)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser(username = GroupControllerTest.MEMBER_ID_VALUE)
 public class GroupControllerTest {
 
+    static final String MEMBER_ID_VALUE = "c0ffee00-0000-4000-8000-000000000001";
+    private static final UUID MEMBER_ID = UUID.fromString(MEMBER_ID_VALUE);
 
 
     @MockitoBean
@@ -56,6 +60,23 @@ public class GroupControllerTest {
     void setUp() {
         groupDto = GroupTestDataFactory.createGroupDto();
         boardId = GroupTestDataFactory.BOARD_ID;
+    }
+
+    @Test
+    void shouldSetCreatedByFromTheTokenAndIgnoreTheOneInTheBody() throws Exception {
+
+        when(groupService.createGroupByBoardId(any(), eq(boardId))).thenReturn(groupDto);
+        groupDto.setCreatedBy(UUID.randomUUID());
+
+        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(groupDto)))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<GroupDTO> sentToService = ArgumentCaptor.forClass(GroupDTO.class);
+        verify(groupService).createGroupByBoardId(sentToService.capture(), eq(boardId));
+        assertEquals(MEMBER_ID, sentToService.getValue().getCreatedBy());
     }
 
     @Test
@@ -220,16 +241,5 @@ public class GroupControllerTest {
                         "Board not found with id: " + boardId));
 
         verify(groupService).getGroupsByBoardId(boardId);
-    }
-
-    @Test
-    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
-
-        groupDto.setCreatedBy(null);
-
-        mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(groupDto)))
-                .andExpect(status().isBadRequest());
     }
 }

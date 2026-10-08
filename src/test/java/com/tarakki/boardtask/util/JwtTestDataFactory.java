@@ -25,6 +25,12 @@ public class JwtTestDataFactory {
         return encode(SECRET, memberId, now, now.plus(Duration.ofHours(1)));
     }
 
+    /** A correctly signed, unexpired token whose subject is not a member id. */
+    public static String createValidTokenWithSubject(String subject) {
+        Instant now = Instant.now();
+        return encode(SECRET, subject, now, now.plus(Duration.ofHours(1)));
+    }
+
     public static String createExpiredToken(UUID memberId) {
         Instant now = Instant.now();
         return encode(SECRET, memberId, now.minus(Duration.ofHours(2)), now.minus(Duration.ofHours(1)));
@@ -46,12 +52,16 @@ public class JwtTestDataFactory {
     }
 
     private static String encode(String secret, UUID memberId, Instant issuedAt, Instant expiresAt) {
+        return encode(secret, memberId.toString(), issuedAt, expiresAt);
+    }
+
+    private static String encode(String secret, String subject, Instant issuedAt, Instant expiresAt) {
         SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         JwtEncoder encoder = new NimbusJwtEncoder(new ImmutableSecret<>(key));
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .subject(memberId.toString())
+                .subject(subject)
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .build();

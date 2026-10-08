@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -64,6 +65,7 @@ public class GroupControllerTest {
                 .thenThrow(new OrgMemberNotFoundException(groupDto.getCreatedBy(), 1L));
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isNotFound())
@@ -80,6 +82,7 @@ public class GroupControllerTest {
                 .thenThrow(new OrgServiceUnavailableException(1L));
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isServiceUnavailable());
@@ -94,6 +97,7 @@ public class GroupControllerTest {
                 .thenReturn(groupDto);
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isCreated())
@@ -111,6 +115,7 @@ public class GroupControllerTest {
                 .thenThrow(new BoardNotFoundException(boardId));
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isNotFound())
@@ -125,6 +130,7 @@ public class GroupControllerTest {
                 .thenThrow(new PositionAlreadyExistsException(GroupTestDataFactory.POSITION, boardId));
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isConflict())
@@ -138,6 +144,7 @@ public class GroupControllerTest {
         groupDto.setBoardId(null);
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());
@@ -149,6 +156,7 @@ public class GroupControllerTest {
         groupDto.setGroupName(null);
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());
@@ -160,6 +168,7 @@ public class GroupControllerTest {
         groupDto.setPosition(null);
 
         mockMvc.perform(post("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(groupDto)))
                 .andExpect(status().isBadRequest());
@@ -171,7 +180,8 @@ public class GroupControllerTest {
         when(groupService.getGroupsByBoardId(boardId))
                 .thenReturn(List.of(groupDto));
 
-        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId))
+        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].groupId").value(groupDto.getGroupId()))
@@ -189,7 +199,8 @@ public class GroupControllerTest {
         when(groupService.getGroupsByBoardId(boardId))
                 .thenReturn(List.of());
 
-        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId))
+        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
 
@@ -202,7 +213,8 @@ public class GroupControllerTest {
         when(groupService.getGroupsByBoardId(boardId))
                 .thenThrow(new BoardNotFoundException(boardId));
 
-        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId))
+        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId)
+                        .with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board not found with id: " + boardId));

@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.mockito.Mockito.when;
@@ -66,6 +67,7 @@ class BoardControllerTest {
                 .thenReturn(output);
 
         mockMvc.perform(post("/api/boards")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -80,6 +82,7 @@ class BoardControllerTest {
         input.setBoardName(null);
 
         mockMvc.perform(post("/api/boards")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -91,6 +94,7 @@ class BoardControllerTest {
         input.setBoardDesc(null);
 
         mockMvc.perform(post("/api/boards")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -102,6 +106,7 @@ class BoardControllerTest {
         input.setOrgId(null);
 
         mockMvc.perform(post("/api/boards")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -112,7 +117,8 @@ class BoardControllerTest {
 
         doNothing().when(boardService).deleteBoard(EXISTING_BOARD_ID);
 
-        mockMvc.perform(delete("/api/boards/{boardId}", EXISTING_BOARD_ID))
+        mockMvc.perform(delete("/api/boards/{boardId}", EXISTING_BOARD_ID)
+                        .with(jwt()))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
@@ -123,7 +129,8 @@ class BoardControllerTest {
     void shouldReturn404WhenDeletingBoardThatDoesNotExist() throws Exception {
         doThrow(new BoardNotFoundException(MISSING_BOARD_ID)).when(boardService).deleteBoard(MISSING_BOARD_ID);
 
-        mockMvc.perform(delete("/api/boards/{boardId}", MISSING_BOARD_ID))
+        mockMvc.perform(delete("/api/boards/{boardId}", MISSING_BOARD_ID)
+                        .with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("Board not found with id: " + MISSING_BOARD_ID));
 
@@ -136,6 +143,7 @@ class BoardControllerTest {
                 .thenThrow(new OrgMemberNotFoundException(input.getCreatedBy(), input.getOrgId()));
 
         mockMvc.perform(post("/api/boards")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isNotFound())
@@ -151,6 +159,7 @@ class BoardControllerTest {
                 .thenThrow(new OrgServiceUnavailableException(input.getOrgId()));
 
         mockMvc.perform(post("/api/boards")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isServiceUnavailable());
@@ -168,6 +177,7 @@ class BoardControllerTest {
                 .thenReturn(boards);
 
         mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].boardId").value(output.getBoardId()))
@@ -184,6 +194,7 @@ class BoardControllerTest {
                 .thenThrow(new com.tarakki.common.exceptionHandling.OrganizationNotFoundException(orgId));
 
         mockMvc.perform(get("/api/boards/organization/{orgId}", orgId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -197,6 +208,7 @@ class BoardControllerTest {
                 .thenReturn(output);
 
         mockMvc.perform(get("/api/boards/{id}", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.boardId").value(output.getBoardId()))
@@ -213,6 +225,7 @@ class BoardControllerTest {
                 .thenThrow(new com.tarakki.boardtask.exception.BoardNotFoundException(boardId));
 
         mockMvc.perform(get("/api/boards/{id}", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -229,6 +242,7 @@ class BoardControllerTest {
                 .thenReturn(patchedDTO);
 
         mockMvc.perform(patch("/api/boards/{boardId}", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -246,6 +260,7 @@ class BoardControllerTest {
                 .thenThrow(new com.tarakki.boardtask.exception.BoardNotFoundException(boardId));
 
         mockMvc.perform(patch("/api/boards/{boardId}", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isNotFound());

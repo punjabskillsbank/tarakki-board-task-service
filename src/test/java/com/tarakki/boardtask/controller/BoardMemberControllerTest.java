@@ -24,6 +24,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -70,6 +71,7 @@ public class BoardMemberControllerTest {
                 .thenReturn(boardMemberDto);
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isCreated())
@@ -88,6 +90,7 @@ public class BoardMemberControllerTest {
                 .thenThrow(new BoardNotFoundException(invalidBoardId));
 
         mockMvc.perform(post(URL, invalidBoardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isNotFound())
@@ -102,6 +105,7 @@ public class BoardMemberControllerTest {
                 .thenThrow(new OrgMemberNotFoundException(invalidOrgMemberId, orgId));
 
         mockMvc.perform(post(URL, boardId, invalidOrgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isNotFound())
@@ -116,6 +120,7 @@ public class BoardMemberControllerTest {
                 .thenThrow(new OrganizationNotFoundException(orgId));
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isNotFound())
@@ -130,6 +135,7 @@ public class BoardMemberControllerTest {
                 .thenThrow(new BoardMemberExistsException(memberId, boardId));
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isConflict())
@@ -144,6 +150,7 @@ public class BoardMemberControllerTest {
                 .thenThrow(new OrgServiceUnavailableException(orgId));
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isServiceUnavailable())
@@ -157,6 +164,7 @@ public class BoardMemberControllerTest {
         boardMemberRequestDTO.setEmail(null);
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isBadRequest());
@@ -168,6 +176,7 @@ public class BoardMemberControllerTest {
         boardMemberRequestDTO.setCanEdit(null);
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isBadRequest());
@@ -179,6 +188,7 @@ public class BoardMemberControllerTest {
         boardMemberRequestDTO.setCanView(null);
 
         mockMvc.perform(post(URL, boardId, orgMemberId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(boardMemberRequestDTO)))
                 .andExpect(status().isBadRequest());

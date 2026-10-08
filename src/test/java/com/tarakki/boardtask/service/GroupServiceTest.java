@@ -105,6 +105,42 @@ public class GroupServiceTest {
     }
 
     @Test
+    void createGroupByBoardId_shouldSaveUnderTheBoardIdFromThePathAndNotTheBody() {
+
+        groupDTO.setBoardId(invalidBoardId);
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy()))
+                .thenReturn(true);
+
+        when(groupRepository.existsByBoardIdAndPosition(boardId, position))
+                .thenReturn(false);
+
+        when(modelMapper.map(any(GroupDTO.class), eq(Group.class)))
+                .thenReturn(groupEntity);
+
+        when(groupRepository.save(any(Group.class)))
+                .thenReturn(groupEntity);
+
+        when(modelMapper.map(any(Group.class), eq(GroupDTO.class)))
+                .thenReturn(groupDTO);
+
+        groupService.createGroupByBoardId(groupDTO, boardId);
+
+        ArgumentCaptor<GroupDTO> mappedDto = ArgumentCaptor.forClass(GroupDTO.class);
+        verify(modelMapper).map(mappedDto.capture(), eq(Group.class));
+        assertEquals(boardId, mappedDto.getValue().getBoardId());
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy());
+        verify(groupRepository).existsByBoardIdAndPosition(boardId, position);
+        verify(groupRepository).save(any(Group.class));
+        verify(modelMapper).map(any(Group.class), eq(GroupDTO.class));
+    }
+
+    @Test
     void shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
 
         when(boardRepository.findById(anyLong()))

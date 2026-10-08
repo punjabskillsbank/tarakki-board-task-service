@@ -40,6 +40,8 @@ public class TaskServiceImpl implements TaskService {
             throw new OrgMemberNotFoundException(taskDTO.getCreatedBy(), board.getOrgId());
         }
 
+        taskDTO.setBoardId(boardId);
+
         Task task = modelMapper.map(taskDTO, Task.class);
 
         taskRepository.save(task);

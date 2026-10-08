@@ -104,6 +104,38 @@ public class TaskServiceTest {
     }
 
     @Test
+    void createTaskByBoardId_shouldSaveUnderTheBoardIdFromThePathAndNotTheBody() {
+
+        taskDTO.setBoardId(invalidBoardId);
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+                .thenReturn(true);
+
+        when(modelMapper.map(any(TaskDTO.class), eq(Task.class)))
+                .thenReturn(taskEntity);
+
+        when(taskRepository.save(any(Task.class)))
+                .thenReturn(taskEntity);
+
+        when(modelMapper.map(any(Task.class), eq(TaskDTO.class)))
+                .thenReturn(taskDTO);
+
+        taskService.createTaskByBoardId(taskDTO, boardId);
+
+        ArgumentCaptor<TaskDTO> mappedDto = ArgumentCaptor.forClass(TaskDTO.class);
+        verify(modelMapper).map(mappedDto.capture(), eq(Task.class));
+        assertEquals(boardId, mappedDto.getValue().getBoardId());
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
+        verify(taskRepository).save(any(Task.class));
+        verify(modelMapper).map(any(Task.class), eq(TaskDTO.class));
+    }
+
+    @Test
     void shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
 
         when(boardRepository.findById(anyLong()))

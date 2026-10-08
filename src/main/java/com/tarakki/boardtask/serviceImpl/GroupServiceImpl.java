@@ -42,6 +42,8 @@ public class GroupServiceImpl implements GroupService {
             throw new PositionAlreadyExistsException(groupDTO.getPosition(), boardId);
         }
 
+        groupDTO.setBoardId(boardId);
+
         Group group = modelMapper.map(groupDTO, Group.class);
         groupRepository.save(group);
 

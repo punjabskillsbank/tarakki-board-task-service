@@ -24,16 +24,17 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 
+import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GroupController.class)
 @Import(GlobalExceptionHandler.class)
@@ -55,10 +56,12 @@ public class GroupControllerTest {
 
     private Long boardId;
     private GroupDTO groupDto;
+    private Long invalidGroupId;
 
     @BeforeEach
     void setUp() {
         groupDto = GroupTestDataFactory.createGroupDto();
+        invalidGroupId = GroupTestDataFactory.INVALID_GROUP_ID;
         boardId = GroupTestDataFactory.BOARD_ID;
     }
 
@@ -242,4 +245,29 @@ public class GroupControllerTest {
 
         verify(groupService).getGroupsByBoardId(boardId);
     }
+
+    @Test
+    void shouldDeleteGroupById() throws Exception {
+        doNothing().when(groupService).deleteGroup(groupDto.getGroupId(), boardId);
+
+        mockMvc.perform((delete("/api/boards/{boardId}/groups/{groupId}", EXISTING_BOARD_ID, groupDto.getGroupId()))
+                        .with(jwt()))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        verify(groupService).deleteGroup(groupDto.getGroupId(), boardId);
+    }
+
+    @Test
+    void shouldReturnNoContentWhenGroupDoesNotExist() throws Exception {
+        doNothing().when(groupService).deleteGroup(invalidGroupId, boardId);
+
+        mockMvc.perform(delete("/api/boards/{boardId}/groups/{groupId}", EXISTING_BOARD_ID, invalidGroupId)
+                        .with(jwt()))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+        verify(groupService).deleteGroup(invalidGroupId, boardId);
+
+    }
+
 }

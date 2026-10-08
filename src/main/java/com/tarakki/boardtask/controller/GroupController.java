@@ -1,7 +1,9 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.GroupDTO;
+import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.service.GroupService;
+import com.tarakki.common.audit.annotation.Auditable;
 import com.tarakki.common.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -29,4 +31,12 @@ public class GroupController {
         List<GroupDTO> result = groupService.getGroupsByBoardId(boardId);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
+
+    @Auditable(eventName = "GROUP_DELETED", entityName = "GROUP", entityClass = Group.class, entityIdArgSpel = "#groupId")
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<Void> deleteGroup(@PathVariable Long groupId, @PathVariable Long boardId) {
+        groupService.deleteGroup(groupId, boardId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

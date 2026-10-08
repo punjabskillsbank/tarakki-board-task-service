@@ -120,12 +120,12 @@ class BoardControllerTest {
     }
 
     @Test
-    void shouldReturnNoContentWhenBoardDoesNotExist() throws Exception {
-        doNothing().when(boardService).deleteBoard(MISSING_BOARD_ID);
+    void shouldReturn404WhenDeletingBoardThatDoesNotExist() throws Exception {
+        doThrow(new BoardNotFoundException(MISSING_BOARD_ID)).when(boardService).deleteBoard(MISSING_BOARD_ID);
 
         mockMvc.perform(delete("/api/boards/{boardId}", MISSING_BOARD_ID))
-                .andExpect(status().isNoContent())
-                .andExpect(content().string(""));
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Board not found with id: " + MISSING_BOARD_ID));
 
         verify(boardService).deleteBoard(MISSING_BOARD_ID);
     }

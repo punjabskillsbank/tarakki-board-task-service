@@ -45,7 +45,9 @@ public class BoardServiceImpl implements BoardService {
     @Override
     @Transactional
     public void deleteBoard(Long boardId) {
-        boardRepository.deleteBoardById(boardId);
+        if (boardRepository.deleteBoardById(boardId) == 0) {
+            throw new BoardNotFoundException(boardId);
+        }
     }
 
     @Override

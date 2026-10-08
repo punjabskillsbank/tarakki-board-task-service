@@ -1,9 +1,12 @@
 package com.tarakki.boardtask.service;
 
+import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.GroupDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.GroupRepository;
@@ -13,10 +16,12 @@ import com.tarakki.boardtask.util.GroupTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +40,9 @@ public class GroupServiceTest {
 
     @Mock
     private BoardRepository boardRepository;
+
+    @Mock
+    private OrgMemberClient orgMemberClient;
 
     @Mock
     private ModelMapper modelMapper;
@@ -65,6 +73,9 @@ public class GroupServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
 
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy()))
+                .thenReturn(true);
+
         when(groupRepository.existsByBoardIdAndPosition(boardId, position))
                 .thenReturn(false);
 
@@ -86,6 +97,7 @@ public class GroupServiceTest {
         assertEquals(groupDTO.getCreatedBy(), result.getCreatedBy());
 
         verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy());
         verify(groupRepository).existsByBoardIdAndPosition(boardId, position);
         verify(modelMapper).map(any(GroupDTO.class), eq(Group.class));
         verify(groupRepository).save(any(Group.class));
@@ -105,6 +117,48 @@ public class GroupServiceTest {
         assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
 
         verify(boardRepository).findById(invalidBoardId);
+        verify(orgMemberClient, never()).isMemberInOrganization(any(), any());
+        verify(groupRepository, never()).existsByBoardIdAndPosition(anyLong(), anyInt());
+        verify(groupRepository, never()).save(any(Group.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void createGroupByBoardId_shouldThrowWhenCreatorIsNotAMemberOfTheOrganization() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy()))
+                .thenReturn(false);
+
+        OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
+                () -> groupService.createGroupByBoardId(groupDTO, boardId));
+
+        assertEquals("Member " + groupDTO.getCreatedBy() + " is not a member of organization " + board.getOrgId(),
+                exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy());
+        verify(groupRepository, never()).existsByBoardIdAndPosition(anyLong(), anyInt());
+        verify(groupRepository, never()).save(any(Group.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void createGroupByBoardId_shouldThrowWhenOrganizationServiceIsUnavailable() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy()))
+                .thenThrow(new RestClientException("connection refused"));
+
+        assertThrows(OrgServiceUnavailableException.class,
+                () -> groupService.createGroupByBoardId(groupDTO, boardId));
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy());
         verify(groupRepository, never()).existsByBoardIdAndPosition(anyLong(), anyInt());
         verify(groupRepository, never()).save(any(Group.class));
         verify(modelMapper, never()).map(any(), any());
@@ -115,6 +169,9 @@ public class GroupServiceTest {
 
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
+
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy()))
+                .thenReturn(true);
 
         when(groupRepository.existsByBoardIdAndPosition(boardId, position))
                 .thenReturn(true);
@@ -127,6 +184,7 @@ public class GroupServiceTest {
                 exception.getMessage());
 
         verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy());
         verify(groupRepository).existsByBoardIdAndPosition(boardId, position);
         verify(groupRepository, never()).save(any(Group.class));
         verify(modelMapper, never()).map(any(), any());

@@ -1,8 +1,11 @@
 package com.tarakki.boardtask.service;
 
+import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.serviceImpl.TaskServiceImpl;
@@ -13,10 +16,12 @@ import com.tarakki.boardtask.entity.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +42,9 @@ public class TaskServiceTest {
 
     @Mock
     private BoardRepository boardRepository;
+
+    @Mock
+    private OrgMemberClient orgMemberClient;
 
     @Mock
     private ModelMapper modelMapper;
@@ -66,6 +74,9 @@ public class TaskServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
 
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+                .thenReturn(true);
+
         when(modelMapper.map(any(TaskDTO.class), eq(Task.class)))
                 .thenReturn(taskEntity);
 
@@ -85,6 +96,7 @@ public class TaskServiceTest {
         assertEquals(taskDTO.getCreatedBy(), result.getCreatedBy());
 
         verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
         verify(modelMapper).map(any(TaskDTO.class), eq(Task.class));
         verify(taskRepository).save(any(Task.class));
         verify(modelMapper).map(any(Task.class), eq(TaskDTO.class));
@@ -104,6 +116,46 @@ public class TaskServiceTest {
         assertEquals("Board not found with id: " + invalidBoardId, boardNotFoundException.getMessage());
 
         verify(boardRepository).findById(invalidBoardId);
+        verify(orgMemberClient, never()).isMemberInOrganization(any(), any());
+        verify(taskRepository, never()).save(any(Task.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void createTaskByBoardId_shouldThrowWhenCreatorIsNotAMemberOfTheOrganization() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+                .thenReturn(false);
+
+        OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
+                () -> taskService.createTaskByBoardId(taskDTO, boardId));
+
+        assertEquals("Member " + taskDTO.getCreatedBy() + " is not a member of organization " + board.getOrgId(),
+                exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
+        verify(taskRepository, never()).save(any(Task.class));
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void createTaskByBoardId_shouldThrowWhenOrganizationServiceIsUnavailable() {
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.ofNullable(board));
+
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+                .thenThrow(new RestClientException("connection refused"));
+
+        assertThrows(OrgServiceUnavailableException.class,
+                () -> taskService.createTaskByBoardId(taskDTO, boardId));
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
         verify(taskRepository, never()).save(any(Task.class));
         verify(modelMapper, never()).map(any(), any());
     }

@@ -2,20 +2,28 @@ package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.dto.BoardUpdateDTO;
+import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.GlobalExceptionHandler;
+import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -28,7 +36,10 @@ import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
 import static com.tarakki.boardtask.util.BoardTestDataFactory.MISSING_BOARD_ID;
 
 @WebMvcTest(BoardController.class)
+@Import(GlobalExceptionHandler.class)
 class BoardControllerTest {
+
+
 
     @Autowired
     private MockMvc mockMvc;
@@ -97,17 +108,6 @@ class BoardControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
-
-        input.setCreatedBy(null);
-
-        mockMvc.perform(post("/api/boards")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void shouldDeleteBoard() throws Exception {
 
         doNothing().when(boardService).deleteBoard(EXISTING_BOARD_ID);
@@ -128,6 +128,34 @@ class BoardControllerTest {
                 .andExpect(content().string(""));
 
         verify(boardService).deleteBoard(MISSING_BOARD_ID);
+    }
+
+    @Test
+    void shouldReturn404WhenCreatorIsNotAMemberOfTheOrganization() throws Exception {
+        when(boardService.createBoard(any()))
+                .thenThrow(new OrgMemberNotFoundException(input.getCreatedBy(), input.getOrgId()));
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Member " + input.getCreatedBy()
+                        + " is not a member of organization " + input.getOrgId()));
+
+        verify(boardService).createBoard(any());
+    }
+
+    @Test
+    void shouldReturn503WhenOrganizationServiceIsUnavailable() throws Exception {
+        when(boardService.createBoard(any()))
+                .thenThrow(new OrgServiceUnavailableException(input.getOrgId()));
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isServiceUnavailable());
+
+        verify(boardService).createBoard(any());
     }
 
     @Test
@@ -223,5 +251,14 @@ class BoardControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-}
+    @Test
+    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
 
+        input.setCreatedBy(null);
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isBadRequest());
+    }
+}

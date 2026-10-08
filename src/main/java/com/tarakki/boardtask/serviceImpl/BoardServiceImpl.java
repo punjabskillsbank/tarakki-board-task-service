@@ -3,7 +3,10 @@ package com.tarakki.boardtask.serviceImpl;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
+import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
@@ -12,8 +15,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +26,15 @@ public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
     private final OrganizationRepository organizationRepository;
+    private final OrgMemberClient orgMemberClient;
     private final ModelMapper modelMapper;
 
     @Override
     public BoardDTO createBoard(BoardDTO boardDTO) {
+
+        if (!isMemberInOrganization(boardDTO.getOrgId(), boardDTO.getCreatedBy())) {
+            throw new OrgMemberNotFoundException(boardDTO.getCreatedBy(), boardDTO.getOrgId());
+        }
 
         Board board = modelMapper.map(boardDTO, Board.class);
         Board savedBoard = boardRepository.save(board);
@@ -70,5 +80,11 @@ public class BoardServiceImpl implements BoardService {
         return modelMapper.map(updatedBoard, BoardDTO.class);
     }
 
+    private boolean isMemberInOrganization(Long orgId, UUID memberId) {
+        try {
+            return orgMemberClient.isMemberInOrganization(orgId, memberId);
+        } catch (RestClientException exception) {
+            throw new OrgServiceUnavailableException(orgId);
+        }
+    }
 }
-

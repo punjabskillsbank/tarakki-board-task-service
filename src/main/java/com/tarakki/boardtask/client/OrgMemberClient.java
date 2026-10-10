@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClient;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -43,5 +44,15 @@ public class OrgMemberClient {
         return orgMembers.stream()
                 .filter(orgMember -> Objects.equals(orgMember.getOrgMemberId(), orgMemberId))
                 .findFirst();
+    }
+
+    public boolean isMemberInOrganization(Long orgId, UUID memberId) {
+
+        Boolean exists = orgServiceRestClient.get()
+                .uri(orgApiEndpoint + "/{orgId}/members/{memberId}/exists", orgId, memberId)
+                .retrieve()
+                .body(Boolean.class);
+
+        return Boolean.TRUE.equals(exists);
     }
 }

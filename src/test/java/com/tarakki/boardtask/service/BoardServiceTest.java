@@ -1,5 +1,6 @@
 package com.tarakki.boardtask.service;
 
+import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
@@ -9,6 +10,8 @@ import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +36,9 @@ class BoardServiceTest {
 
     @Mock
     private OrganizationRepository organizationRepository;
+
+    @Mock
+    private OrgMemberClient orgMemberClient;
 
     @Mock
     private ModelMapper modelMapper;
@@ -57,6 +64,9 @@ class BoardServiceTest {
     @Test
     void shouldCreateBoard() {
 
+        when(orgMemberClient.isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy()))
+                .thenReturn(true);
+
         when(modelMapper.map(any(BoardDTO.class), eq(Board.class)))
                 .thenReturn(board);
 
@@ -75,9 +85,40 @@ class BoardServiceTest {
         assertEquals(dto.getOrgId(), result.getOrgId());
         assertEquals(dto.getCreatedBy(), result.getCreatedBy());
 
+        verify(orgMemberClient).isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy());
         verify(modelMapper).map(any(BoardDTO.class), eq(Board.class));
         verify(boardRepository).save(any(Board.class));
         verify(modelMapper).map(any(Board.class), eq(BoardDTO.class));
+    }
+
+    @Test
+    void createBoard_shouldThrowWhenCreatorIsNotAMemberOfTheOrganization() {
+
+        when(orgMemberClient.isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy()))
+                .thenReturn(false);
+
+        OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
+                () -> boardService.createBoard(dto));
+
+        assertEquals("Member " + dto.getCreatedBy() + " is not a member of organization " + dto.getOrgId(),
+                exception.getMessage());
+
+        verify(orgMemberClient).isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy());
+        verify(modelMapper, never()).map(any(BoardDTO.class), eq(Board.class));
+        verify(boardRepository, never()).save(any(Board.class));
+    }
+
+    @Test
+    void createBoard_shouldThrowWhenOrganizationServiceIsUnavailable() {
+
+        when(orgMemberClient.isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy()))
+                .thenThrow(new RestClientException("connection refused"));
+
+        assertThrows(OrgServiceUnavailableException.class, () -> boardService.createBoard(dto));
+
+        verify(orgMemberClient).isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy());
+        verify(modelMapper, never()).map(any(BoardDTO.class), eq(Board.class));
+        verify(boardRepository, never()).save(any(Board.class));
     }
 
     @Test
@@ -94,12 +135,15 @@ class BoardServiceTest {
     }
 
     @Test
-    void shouldReturnZeroWhenDeletingMissingBoard() {
+    void deleteBoard_shouldThrowWhenBoardDoesNotExist() {
 
         when(boardRepository.deleteBoardById(missingBoardId))
                 .thenReturn(0);
 
-        boardService.deleteBoard(missingBoardId);
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> boardService.deleteBoard(missingBoardId));
+
+        assertEquals("Board not found with id: " + missingBoardId, exception.getMessage());
 
         verify(boardRepository).deleteBoardById(missingBoardId);
         verify(boardRepository, never()).existsById(anyLong());

@@ -18,8 +18,10 @@ import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -139,5 +141,55 @@ public class OrgMemberClientTest {
 
                 assertThrows(RestClientException.class,
                                 () -> orgMemberClient.findOrgMemberById(orgId, orgMemberId));
+        }
+
+        private void stubExistsChain(UUID memberId) {
+                doReturn(requestHeadersUriSpec).when(orgServiceRestClient).get();
+                doReturn(requestHeadersSpec).when(requestHeadersUriSpec)
+                                .uri(eq(BoardMemberTestDataFactory.ORG_API_ENDPOINT + "/{orgId}/members/{memberId}/exists"),
+                                                eq(orgId), eq(memberId));
+                doReturn(responseSpec).when(requestHeadersSpec).retrieve();
+        }
+
+        @Test
+        void isMemberInOrganization_shouldReturnTrueWhenOrganizationServiceSaysMemberExists() {
+
+                UUID memberId = BoardMemberTestDataFactory.MEMBER_ID;
+                stubExistsChain(memberId);
+                when(responseSpec.body(Boolean.class)).thenReturn(true);
+
+                assertTrue(orgMemberClient.isMemberInOrganization(orgId, memberId));
+        }
+
+        @Test
+        void isMemberInOrganization_shouldReturnFalseWhenOrganizationServiceSaysMemberDoesNotExist() {
+
+                UUID memberId = BoardMemberTestDataFactory.MEMBER_ID;
+                stubExistsChain(memberId);
+                when(responseSpec.body(Boolean.class)).thenReturn(false);
+
+                assertFalse(orgMemberClient.isMemberInOrganization(orgId, memberId));
+        }
+
+        @Test
+        void isMemberInOrganization_shouldReturnFalseWhenResponseBodyIsNull() {
+
+                UUID memberId = BoardMemberTestDataFactory.MEMBER_ID;
+                stubExistsChain(memberId);
+                when(responseSpec.body(Boolean.class)).thenReturn(null);
+
+                assertFalse(orgMemberClient.isMemberInOrganization(orgId, memberId));
+        }
+
+        @Test
+        void isMemberInOrganization_shouldPropagateRestClientExceptionWhenError() {
+
+                UUID memberId = BoardMemberTestDataFactory.MEMBER_ID;
+                stubExistsChain(memberId);
+                when(responseSpec.body(Boolean.class))
+                                .thenThrow(new RestClientException("500 Internal Server Error"));
+
+                assertThrows(RestClientException.class,
+                                () -> orgMemberClient.isMemberInOrganization(orgId, memberId));
         }
 }

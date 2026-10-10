@@ -3,13 +3,18 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.GlobalExceptionHandler;
+import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
+import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,9 +22,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -28,7 +36,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TaskController.class)
+@Import(GlobalExceptionHandler.class)
 public class TaskControllerTest {
+
+
 
     @MockitoBean
     private TaskService taskService;
@@ -46,6 +57,36 @@ public class TaskControllerTest {
     void setUp() {
         taskDto = TaskTestDataFactory.createTaskDto();
         boardId = TaskTestDataFactory.BOARD_ID;
+    }
+
+    @Test
+    void shouldReturn404WhenCreatorIsNotAMemberOfTheOrganization() throws Exception {
+
+        when(taskService.createTaskByBoardId(any(), eq(boardId)))
+                .thenThrow(new OrgMemberNotFoundException(taskDto.getCreatedBy(), 1L));
+
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content()
+                        .string("Member " + taskDto.getCreatedBy() + " is not a member of organization 1"));
+
+        verify(taskService).createTaskByBoardId(any(), eq(boardId));
+    }
+
+    @Test
+    void shouldReturn503WhenOrganizationServiceIsUnavailable() throws Exception {
+
+        when(taskService.createTaskByBoardId(any(), eq(boardId)))
+                .thenThrow(new OrgServiceUnavailableException(1L));
+
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isServiceUnavailable());
+
+        verify(taskService).createTaskByBoardId(any(), eq(boardId));
     }
 
     @Test
@@ -136,17 +177,6 @@ public class TaskControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
-
-        taskDto.setCreatedBy(null);
-
-        mockMvc.perform(post("/api/{boardId}/task", boardId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(taskDto)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void shouldPatchTaskSuccessfully() throws Exception {
         Long taskId = TaskTestDataFactory.TASK_ID;
         TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
@@ -176,5 +206,16 @@ public class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patchRequestDto)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
+
+        taskDto.setCreatedBy(null);
+
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
     }
 }

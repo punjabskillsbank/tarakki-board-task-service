@@ -2,6 +2,7 @@ package com.tarakki.boardtask.util;
 
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
+import com.tarakki.boardtask.dto.BoardMemberUpdateDTO;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.common.dto.OrgMemberDTO;
 import com.tarakki.boardtask.enums.BoardRole;
@@ -66,5 +67,13 @@ public class BoardMemberTestDataFactory {
         requestDTO.setCanEdit(CAN_EDIT);
         requestDTO.setCanView(CAN_VIEW);
         return requestDTO;
+    }
+
+    public static BoardMemberUpdateDTO createBoardMemberUpdateDto() {
+        BoardMemberUpdateDTO dto = new BoardMemberUpdateDTO();
+        dto.setRole(BoardRole.BOARD_ADMIN);
+        dto.setCanEdit(true);
+        dto.setCanView(true);
+        return dto;
     }
 }

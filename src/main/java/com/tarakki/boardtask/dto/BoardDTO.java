@@ -1,5 +1,6 @@
 package com.tarakki.boardtask.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -23,6 +24,6 @@ public class BoardDTO {
     @NotBlank
     private String boardDesc;
 
-    @NotNull
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private UUID createdBy;
 }

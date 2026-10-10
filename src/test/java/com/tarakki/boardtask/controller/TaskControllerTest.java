@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,8 +39,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(TaskController.class)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser(username = TaskControllerTest.MEMBER_ID_VALUE)
 public class TaskControllerTest {
 
+    static final String MEMBER_ID_VALUE = "c0ffee00-0000-4000-8000-000000000001";
+    private static final UUID MEMBER_ID = UUID.fromString(MEMBER_ID_VALUE);
 
 
     @MockitoBean
@@ -60,12 +65,30 @@ public class TaskControllerTest {
     }
 
     @Test
+    void shouldSetCreatedByFromTheTokenAndIgnoreTheOneInTheBody() throws Exception {
+
+        when(taskService.createTaskByBoardId(any(), eq(boardId))).thenReturn(taskDto);
+        taskDto.setCreatedBy(UUID.randomUUID());
+
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<TaskDTO> sentToService = ArgumentCaptor.forClass(TaskDTO.class);
+        verify(taskService).createTaskByBoardId(sentToService.capture(), eq(boardId));
+        assertEquals(MEMBER_ID, sentToService.getValue().getCreatedBy());
+    }
+
+    @Test
     void shouldReturn404WhenCreatorIsNotAMemberOfTheOrganization() throws Exception {
 
         when(taskService.createTaskByBoardId(any(), eq(boardId)))
                 .thenThrow(new OrgMemberNotFoundException(taskDto.getCreatedBy(), 1L));
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isNotFound())
@@ -82,6 +105,7 @@ public class TaskControllerTest {
                 .thenThrow(new OrgServiceUnavailableException(1L));
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isServiceUnavailable());
@@ -96,6 +120,7 @@ public class TaskControllerTest {
                 .thenReturn(taskDto);
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isCreated())
@@ -110,7 +135,8 @@ public class TaskControllerTest {
     void shouldGetTasksByBoardId() throws Exception {
         when(taskService.getTasksByBoardId(boardId)).thenReturn(List.of(taskDto));
 
-        mockMvc.perform(get("/api/{boardId}/task", boardId))
+        mockMvc.perform(get("/api/{boardId}/task", boardId)
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].groupId").value(taskDto.getGroupId()))
                 .andExpect(jsonPath("$[0].title").value(taskDto.getTitle()))
@@ -122,7 +148,8 @@ public class TaskControllerTest {
         when(taskService.getTasksByBoardId(boardId))
                 .thenThrow(new BoardNotFoundException(boardId));
 
-        mockMvc.perform(get("/api/{boardId}/task", boardId))
+        mockMvc.perform(get("/api/{boardId}/task", boardId)
+                        .with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board not found with id: " + boardId));
@@ -134,6 +161,7 @@ public class TaskControllerTest {
         taskDto.setBoardId(null);
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
@@ -146,6 +174,7 @@ public class TaskControllerTest {
                 .thenThrow(new BoardNotFoundException(boardId));
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isNotFound())
@@ -160,6 +189,7 @@ public class TaskControllerTest {
         taskDto.setGroupId(null);
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
@@ -171,6 +201,7 @@ public class TaskControllerTest {
         taskDto.setTitle(null);
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
                 .andExpect(status().isBadRequest());
@@ -186,6 +217,7 @@ public class TaskControllerTest {
                 .thenReturn(patchedResponseDto);
 
         mockMvc.perform(patch("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patchRequestDto)))
                 .andExpect(status().isOk())
@@ -203,19 +235,9 @@ public class TaskControllerTest {
                 .thenThrow(new TaskNotFoundException(taskId));
 
         mockMvc.perform(patch("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patchRequestDto)))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void shouldReturnBadRequestWhenCreatedByIsMissing() throws Exception {
-
-        taskDto.setCreatedBy(null);
-
-        mockMvc.perform(post("/api/{boardId}/task", boardId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(taskDto)))
-                .andExpect(status().isBadRequest());
     }
 }

@@ -5,6 +5,7 @@ import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.entity.Task;
 import com.tarakki.common.audit.annotation.Auditable;
+import com.tarakki.common.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<TaskDTO> createTaskByBoardId(@Valid @RequestBody TaskDTO taskDTO, @PathVariable Long boardId) {
+        taskDTO.setCreatedBy(CurrentMember.require());
         TaskDTO result = taskService.createTaskByBoardId(taskDTO, boardId);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }

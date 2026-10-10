@@ -1,4 +1,4 @@
-package com.tarakki.boardtask.serviceImpl;
+gpackage com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.dto.BoardUpdateDTO;

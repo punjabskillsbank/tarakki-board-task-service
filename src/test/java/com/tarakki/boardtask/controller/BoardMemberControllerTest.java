@@ -2,6 +2,7 @@ package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
+import com.tarakki.boardtask.dto.BoardMemberUpdateDTO;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardMemberNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
@@ -26,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -223,6 +225,59 @@ public class BoardMemberControllerTest {
                 .thenThrow(new BoardMemberNotFoundException(invalidBoardMemberId));
 
         mockMvc.perform(get(GET_BOARD_MEMBER_URL, boardId, invalidBoardMemberId))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Board member not found with id: " + invalidBoardMemberId));
+    }
+
+    @Test
+    void shouldPatchBoardMemberById() throws Exception {
+        BoardMemberUpdateDTO updateDto = BoardMemberTestDataFactory.createBoardMemberUpdateDto();
+        BoardMemberDTO patchedDto = BoardMemberTestDataFactory.createBoardMemberDto();
+        patchedDto.setRole(updateDto.getRole());
+        patchedDto.setCanEdit(updateDto.getCanEdit());
+        patchedDto.setCanView(updateDto.getCanView());
+
+        when(boardMemberService.patchBoardMemberById(eq(boardId), eq(boardMemberId), any(BoardMemberUpdateDTO.class)))
+                .thenReturn(patchedDto);
+
+        mockMvc.perform(patch(GET_BOARD_MEMBER_URL, boardId, boardMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.boardMemberId").value(patchedDto.getBoardMemberId()))
+                .andExpect(jsonPath("$.boardId").value(patchedDto.getBoardId()))
+                .andExpect(jsonPath("$.memberId").value(patchedDto.getMemberId().toString()))
+                .andExpect(jsonPath("$.role").value(updateDto.getRole().name()))
+                .andExpect(jsonPath("$.canEdit").value(updateDto.getCanEdit()))
+                .andExpect(jsonPath("$.canView").value(updateDto.getCanView()));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardIdDoesNotExistForPatchBoardMember() throws Exception {
+        BoardMemberUpdateDTO updateDto = BoardMemberTestDataFactory.createBoardMemberUpdateDto();
+
+        when(boardMemberService.patchBoardMemberById(eq(invalidBoardId), eq(boardMemberId), any(BoardMemberUpdateDTO.class)))
+                .thenThrow(new BoardNotFoundException(invalidBoardId));
+
+        mockMvc.perform(patch(GET_BOARD_MEMBER_URL, invalidBoardId, boardMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Board not found with id: " + invalidBoardId));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardMemberIdDoesNotExistForPatchBoardMember() throws Exception {
+        BoardMemberUpdateDTO updateDto = BoardMemberTestDataFactory.createBoardMemberUpdateDto();
+
+        when(boardMemberService.patchBoardMemberById(eq(boardId), eq(invalidBoardMemberId), any(BoardMemberUpdateDTO.class)))
+                .thenThrow(new BoardMemberNotFoundException(invalidBoardMemberId));
+
+        mockMvc.perform(patch(GET_BOARD_MEMBER_URL, boardId, invalidBoardMemberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board member not found with id: " + invalidBoardMemberId));

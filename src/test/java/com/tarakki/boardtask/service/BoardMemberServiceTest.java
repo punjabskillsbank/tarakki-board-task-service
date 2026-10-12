@@ -3,6 +3,7 @@ package com.tarakki.boardtask.service;
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
+import com.tarakki.boardtask.dto.BoardMemberUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.enums.BoardRole;
@@ -34,6 +35,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -330,6 +332,101 @@ public class BoardMemberServiceTest {
 
         verify(boardRepository).findById(boardId);
         verify(boardMemberRepository).findById(boardMemberId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void patchBoardMemberById_shouldUpdateAndReturnBoardMemberWhenExists() {
+        BoardMemberUpdateDTO updateDto = BoardMemberTestDataFactory.createBoardMemberUpdateDto();
+        BoardMemberDTO patchedDto = BoardMemberTestDataFactory.createBoardMemberDto();
+        patchedDto.setRole(updateDto.getRole());
+        patchedDto.setCanEdit(updateDto.getCanEdit());
+        patchedDto.setCanView(updateDto.getCanView());
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(boardMemberEntity));
+        doNothing().when(modelMapper).map(any(BoardMemberUpdateDTO.class), any(BoardMember.class));
+        when(boardMemberRepository.save(any(BoardMember.class)))
+                .thenReturn(boardMemberEntity);
+        when(modelMapper.map(boardMemberEntity, BoardMemberDTO.class))
+                .thenReturn(patchedDto);
+
+        BoardMemberDTO result = boardMemberService.patchBoardMemberById(boardId, boardMemberId, updateDto);
+
+        assertNotNull(result);
+        assertEquals(updateDto.getRole(), result.getRole());
+        assertEquals(updateDto.getCanEdit(), result.getCanEdit());
+        assertEquals(updateDto.getCanView(), result.getCanView());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(modelMapper).map(updateDto, boardMemberEntity);
+        verify(boardMemberRepository).save(boardMemberEntity);
+        verify(modelMapper).map(boardMemberEntity, BoardMemberDTO.class);
+    }
+
+    @Test
+    void patchBoardMemberById_shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
+        BoardMemberUpdateDTO updateDto = BoardMemberTestDataFactory.createBoardMemberUpdateDto();
+
+        when(boardRepository.findById(invalidBoardId))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> boardMemberService.patchBoardMemberById(invalidBoardId, boardMemberId, updateDto)
+        );
+
+        assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(boardMemberRepository, never()).findById(anyLong());
+        verify(boardMemberRepository, never()).save(any());
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void patchBoardMemberById_shouldThrowBoardMemberNotFoundExceptionWhenBoardMemberDoesNotExist() {
+        BoardMemberUpdateDTO updateDto = BoardMemberTestDataFactory.createBoardMemberUpdateDto();
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(invalidBoardMemberId))
+                .thenReturn(Optional.empty());
+
+        BoardMemberNotFoundException exception = assertThrows(BoardMemberNotFoundException.class,
+                () -> boardMemberService.patchBoardMemberById(boardId, invalidBoardMemberId, updateDto)
+        );
+
+        assertEquals("Board member not found with id: " + invalidBoardMemberId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(invalidBoardMemberId);
+        verify(boardMemberRepository, never()).save(any());
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void patchBoardMemberById_shouldThrowBoardMemberNotFoundExceptionWhenBoardMemberDoesNotBelongToBoard() {
+        BoardMemberUpdateDTO updateDto = BoardMemberTestDataFactory.createBoardMemberUpdateDto();
+        BoardMember memberFromDifferentBoard = BoardMemberTestDataFactory.createBoardMemberEntity();
+        memberFromDifferentBoard.setBoardId(999L);
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(memberFromDifferentBoard));
+
+        BoardMemberNotFoundException exception = assertThrows(BoardMemberNotFoundException.class,
+                () -> boardMemberService.patchBoardMemberById(boardId, boardMemberId, updateDto)
+        );
+
+        assertEquals("Board member not found with id: " + boardMemberId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(boardMemberRepository, never()).save(any());
         verify(modelMapper, never()).map(any(), any());
     }
 }

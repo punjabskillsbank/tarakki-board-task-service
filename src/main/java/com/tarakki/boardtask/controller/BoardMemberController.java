@@ -2,7 +2,10 @@ package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.BoardMemberDTO;
 import com.tarakki.boardtask.dto.BoardMemberRequestDTO;
+import com.tarakki.boardtask.dto.BoardMemberUpdateDTO;
+import com.tarakki.boardtask.entity.BoardMember;
 import com.tarakki.boardtask.service.BoardMemberService;
+import com.tarakki.common.audit.annotation.Auditable;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,5 +32,15 @@ public class BoardMemberController {
                                                              @PathVariable Long boardMemberId) {
         BoardMemberDTO result = boardMemberService.getBoardMemberById(boardId, boardMemberId);
         return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @Auditable(eventName = "BOARD_MEMBER_UPDATED", entityName = "BOARD_MEMBER", entityClass = BoardMember.class, entityIdArgSpel = "#boardMemberId")
+    @PatchMapping("/{boardMemberId}")
+    public ResponseEntity<BoardMemberDTO> patchBoardMemberById(
+            @PathVariable Long boardId,
+            @PathVariable Long boardMemberId,
+            @RequestBody BoardMemberUpdateDTO boardMemberUpdateDTO) {
+        BoardMemberDTO result = boardMemberService.patchBoardMemberById(boardId, boardMemberId, boardMemberUpdateDTO);
+        return ResponseEntity.ok(result);
     }
 }

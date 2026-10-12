@@ -4,6 +4,7 @@ import com.tarakki.boardtask.dto.GroupDTO;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.service.GroupService;
 import com.tarakki.common.audit.annotation.Auditable;
+import com.tarakki.common.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ public class GroupController {
 
     @PostMapping
     public ResponseEntity<GroupDTO> createGroupByBoardId(@Valid @RequestBody GroupDTO groupDTO, @PathVariable Long boardId) {
+        groupDTO.setCreatedBy(CurrentMember.require());
         GroupDTO result = groupService.createGroupByBoardId(groupDTO, boardId);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }

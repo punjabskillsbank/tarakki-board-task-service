@@ -4,10 +4,14 @@ import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
+import com.tarakki.boardtask.entity.BoardMember;
+import com.tarakki.boardtask.enums.BoardRole;
+import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
 import com.tarakki.boardtask.serviceImpl.BoardServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
+import com.tarakki.common.entity.Organization;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
@@ -15,6 +19,7 @@ import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.modelmapper.ModelMapper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -38,6 +43,9 @@ class BoardServiceTest {
     private OrganizationRepository organizationRepository;
 
     @Mock
+    private BoardMemberRepository boardMemberRepository;
+
+    @Mock
     private OrgMemberClient orgMemberClient;
 
     @Mock
@@ -49,6 +57,7 @@ class BoardServiceTest {
     private BoardDTO dto;
     private BoardDTO dtoWithId;
     private Board board;
+    private Organization organization;
     private Long existingBoardId;
     private Long missingBoardId;
 
@@ -59,6 +68,7 @@ class BoardServiceTest {
         board = BoardTestDataFactory.createBoardEntity();
         existingBoardId = BoardTestDataFactory.createExistingBoardId();
         missingBoardId = BoardTestDataFactory.createMissingBoardId();
+        organization = BoardTestDataFactory.createOrganizationEntity();
     }
 
     @Test
@@ -66,6 +76,9 @@ class BoardServiceTest {
 
         when(orgMemberClient.isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy()))
                 .thenReturn(true);
+
+        when(organizationRepository.findById(dto.getOrgId()))
+                .thenReturn(Optional.of(organization));
 
         when(modelMapper.map(any(BoardDTO.class), eq(Board.class)))
                 .thenReturn(board);
@@ -86,8 +99,19 @@ class BoardServiceTest {
         assertEquals(dto.getCreatedBy(), result.getCreatedBy());
 
         verify(orgMemberClient).isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy());
+        verify(organizationRepository).findById(dto.getOrgId());
         verify(modelMapper).map(any(BoardDTO.class), eq(Board.class));
         verify(boardRepository).save(any(Board.class));
+
+        ArgumentCaptor<BoardMember> memberCaptor = ArgumentCaptor.forClass(BoardMember.class);
+        verify(boardMemberRepository).save(memberCaptor.capture());
+        BoardMember savedMember = memberCaptor.getValue();
+        assertEquals(board.getBoardId(), savedMember.getBoardId());
+        assertEquals(organization.getOwnerId(), savedMember.getMemberId());
+        assertEquals(BoardRole.BOARD_ADMIN, savedMember.getRole());
+        assertTrue(savedMember.isCanEdit());
+        assertTrue(savedMember.isCanView());
+
         verify(modelMapper).map(any(Board.class), eq(BoardDTO.class));
     }
 
@@ -104,8 +128,31 @@ class BoardServiceTest {
                 exception.getMessage());
 
         verify(orgMemberClient).isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy());
+        verify(organizationRepository, never()).findById(any());
         verify(modelMapper, never()).map(any(BoardDTO.class), eq(Board.class));
         verify(boardRepository, never()).save(any(Board.class));
+        verify(boardMemberRepository, never()).save(any(BoardMember.class));
+    }
+
+    @Test
+    void createBoard_shouldThrowWhenOrganizationNotFound() {
+
+        when(orgMemberClient.isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy()))
+                .thenReturn(true);
+
+        when(organizationRepository.findById(dto.getOrgId()))
+                .thenReturn(Optional.empty());
+
+        OrganizationNotFoundException exception = assertThrows(OrganizationNotFoundException.class,
+                () -> boardService.createBoard(dto));
+
+        assertEquals("Organization with id " + dto.getOrgId() + " not found", exception.getMessage());
+
+        verify(orgMemberClient).isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy());
+        verify(organizationRepository).findById(dto.getOrgId());
+        verify(modelMapper, never()).map(any(BoardDTO.class), eq(Board.class));
+        verify(boardRepository, never()).save(any(Board.class));
+        verify(boardMemberRepository, never()).save(any(BoardMember.class));
     }
 
     @Test
@@ -117,8 +164,10 @@ class BoardServiceTest {
         assertThrows(OrgServiceUnavailableException.class, () -> boardService.createBoard(dto));
 
         verify(orgMemberClient).isMemberInOrganization(dto.getOrgId(), dto.getCreatedBy());
+        verify(organizationRepository, never()).findById(any());
         verify(modelMapper, never()).map(any(BoardDTO.class), eq(Board.class));
         verify(boardRepository, never()).save(any(Board.class));
+        verify(boardMemberRepository, never()).save(any(BoardMember.class));
     }
 
     @Test

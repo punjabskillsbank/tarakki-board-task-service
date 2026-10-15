@@ -8,6 +8,7 @@ import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
+import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -23,7 +24,6 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -154,6 +154,20 @@ class BoardControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isServiceUnavailable());
+
+        verify(boardService).createBoard(any());
+    }
+
+    @Test
+    void shouldReturn404WhenOrganizationNotFoundOnCreateBoard() throws Exception {
+        when(boardService.createBoard(any()))
+                .thenThrow(new OrganizationNotFoundException(input.getOrgId()));
+
+        mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(input)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Organization with id " + input.getOrgId() + " not found"));
 
         verify(boardService).createBoard(any());
     }

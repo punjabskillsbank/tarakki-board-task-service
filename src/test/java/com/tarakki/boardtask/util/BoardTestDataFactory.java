@@ -3,6 +3,7 @@ package com.tarakki.boardtask.util;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
+import com.tarakki.common.entity.Organization;
 
 import java.util.UUID;
 
@@ -29,6 +30,14 @@ public class BoardTestDataFactory {
     public static final Long VALID_BOARD_ID = 1L;
 
     public static final UUID CREATED_BY = UUID.fromString("2af05d6e-b8db-4fe2-8385-d2a737332521");
+    public static final UUID OWNER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+
+    public static Organization createOrganizationEntity() {
+        Organization organization = new Organization();
+        organization.setOrgId(VALID_ORG_ID);
+        organization.setOwnerId(OWNER_ID);
+        return organization;
+    }
 
     public static BoardDTO createBoardDTO() {
         BoardDTO dto = new BoardDTO();

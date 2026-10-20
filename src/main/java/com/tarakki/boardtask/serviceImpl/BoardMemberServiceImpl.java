@@ -22,6 +22,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -72,6 +73,18 @@ public class BoardMemberServiceImpl implements BoardMemberService {
                 .orElseThrow(() -> new BoardMemberNotFoundException(boardMemberId));
 
         return modelMapper.map(boardMember, BoardMemberDTO.class);
+    }
+
+    @Override
+    public List<BoardMemberDTO> getBoardMembersByBoardId(Long boardId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        List<BoardMember> boardMembers = boardMemberRepository.findByBoardId(boardId);
+
+        return boardMembers.stream()
+                .map(boardMember -> modelMapper.map(boardMember, BoardMemberDTO.class))
+                .toList();
     }
 
     @Override

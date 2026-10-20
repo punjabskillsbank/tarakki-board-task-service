@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +38,7 @@ public class BoardMemberControllerTest {
 
     private static final String URL = "/api/boards/{boardId}/members/{orgMemberId}";
     private static final String GET_BOARD_MEMBER_URL = "/api/boards/{boardId}/members/{boardMemberId}";
+    private static final String GET_ALL_BOARD_MEMBERS_URL = "/api/boards/{boardId}/members";
 
     @MockitoBean
     private BoardMemberService boardMemberService;
@@ -228,6 +230,44 @@ public class BoardMemberControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board member not found with id: " + invalidBoardMemberId));
+    }
+
+    @Test
+    void shouldGetAllBoardMembersByBoardId() throws Exception {
+        when(boardMemberService.getBoardMembersByBoardId(boardId))
+                .thenReturn(List.of(boardMemberDto));
+
+        mockMvc.perform(get(GET_ALL_BOARD_MEMBERS_URL, boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].boardMemberId").value(boardMemberDto.getBoardMemberId()))
+                .andExpect(jsonPath("$[0].boardId").value(boardMemberDto.getBoardId()))
+                .andExpect(jsonPath("$[0].memberId").value(boardMemberDto.getMemberId().toString()))
+                .andExpect(jsonPath("$[0].role").value(boardMemberDto.getRole().name()))
+                .andExpect(jsonPath("$[0].canEdit").value(boardMemberDto.getCanEdit()))
+                .andExpect(jsonPath("$[0].canView").value(boardMemberDto.getCanView()));
+    }
+
+
+    @Test
+    void shouldReturnEmptyListWhenNoBoardMembers() throws Exception {
+        when(boardMemberService.getBoardMembersByBoardId(boardId))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get(GET_ALL_BOARD_MEMBERS_URL, boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardIdDoesNotExistForGetAllBoardMembers() throws Exception {
+        when(boardMemberService.getBoardMembersByBoardId(invalidBoardId))
+                .thenThrow(new BoardNotFoundException(invalidBoardId));
+
+        mockMvc.perform(get(GET_ALL_BOARD_MEMBERS_URL, invalidBoardId))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Board not found with id: " + invalidBoardId));
     }
 
     @Test

@@ -30,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.web.client.RestClientException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -332,6 +333,67 @@ public class BoardMemberServiceTest {
 
         verify(boardRepository).findById(boardId);
         verify(boardMemberRepository).findById(boardMemberId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void getBoardMembersByBoardId_shouldReturnListOfBoardMembersWhenBoardExists() {
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+
+        when(boardMemberRepository.findByBoardId(boardId))
+                .thenReturn(List.of(boardMemberEntity));
+
+        when(modelMapper.map(any(BoardMember.class), eq(BoardMemberDTO.class)))
+                .thenReturn(boardMemberDTO);
+
+        List<BoardMemberDTO> result = boardMemberService.getBoardMembersByBoardId(boardId);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(boardMemberDTO.getBoardMemberId(), result.get(0).getBoardMemberId());
+        assertEquals(boardMemberDTO.getBoardId(), result.get(0).getBoardId());
+        assertEquals(boardMemberDTO.getMemberId(), result.get(0).getMemberId());
+        assertEquals(boardMemberDTO.getRole(), result.get(0).getRole());
+        assertEquals(boardMemberDTO.getCanEdit(), result.get(0).getCanEdit());
+        assertEquals(boardMemberDTO.getCanView(), result.get(0).getCanView());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findByBoardId(boardId);
+        verify(modelMapper).map(boardMemberEntity, BoardMemberDTO.class);
+    }
+
+    @Test
+    void getBoardMembersByBoardId_shouldReturnEmptyListWhenBoardHasNoMembers() {
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+
+        when(boardMemberRepository.findByBoardId(boardId))
+                .thenReturn(List.of());
+
+        List<BoardMemberDTO> result = boardMemberService.getBoardMembersByBoardId(boardId);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findByBoardId(boardId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void getBoardMembersByBoardId_shouldThrowBoardNotFoundExceptionWhenBoardDoesNotExist() {
+        when(boardRepository.findById(invalidBoardId))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> boardMemberService.getBoardMembersByBoardId(invalidBoardId)
+        );
+
+        assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(boardMemberRepository, never()).findByBoardId(anyLong());
         verify(modelMapper, never()).map(any(), any());
     }
 

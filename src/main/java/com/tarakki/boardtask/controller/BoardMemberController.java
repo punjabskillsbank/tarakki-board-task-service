@@ -29,16 +29,16 @@ public class BoardMemberController {
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
+    @GetMapping
+    public ResponseEntity<List<BoardMemberDTO>> getBoardMembersByBoardId(@PathVariable Long boardId) {
+        List<BoardMemberDTO> result = boardMemberService.getBoardMembersByBoardId(boardId);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
     @GetMapping("/{boardMemberId}")
     public ResponseEntity<BoardMemberDTO> getBoardMemberById(@PathVariable Long boardId,
                                                              @PathVariable Long boardMemberId) {
         BoardMemberDTO result = boardMemberService.getBoardMemberById(boardId, boardMemberId);
-        return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    @GetMapping({"", "/"})
-    public ResponseEntity<List<BoardMemberDTO>> getBoardMembersByBoardId(@PathVariable Long boardId) {
-        List<BoardMemberDTO> result = boardMemberService.getBoardMembersByBoardId(boardId);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 

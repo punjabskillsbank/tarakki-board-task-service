@@ -247,16 +247,6 @@ public class BoardMemberControllerTest {
                 .andExpect(jsonPath("$[0].canView").value(boardMemberDto.getCanView()));
     }
 
-    @Test
-    void shouldGetAllBoardMembersByBoardIdWithTrailingSlash() throws Exception {
-        when(boardMemberService.getBoardMembersByBoardId(boardId))
-                .thenReturn(List.of(boardMemberDto));
-
-        mockMvc.perform(get(GET_ALL_BOARD_MEMBERS_URL + "/", boardId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].boardMemberId").value(boardMemberDto.getBoardMemberId()))
-                .andExpect(jsonPath("$[0].boardId").value(boardMemberDto.getBoardId()));
-    }
 
     @Test
     void shouldReturnEmptyListWhenNoBoardMembers() throws Exception {

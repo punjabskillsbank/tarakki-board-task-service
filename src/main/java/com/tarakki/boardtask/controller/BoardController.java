@@ -3,6 +3,7 @@ package com.tarakki.boardtask.controller;
 import com.tarakki.boardtask.dto.BoardDTO;
 import com.tarakki.boardtask.dto.BoardUpdateDTO;
 import com.tarakki.boardtask.service.BoardService;
+import com.tarakki.common.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ public class BoardController {
     @PostMapping
     public ResponseEntity<BoardDTO> createBoard(@Valid @RequestBody BoardDTO boardDTO) {
 
+        boardDTO.setCreatedBy(CurrentMember.require());
         BoardDTO result = boardService.createBoard(boardDTO);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }

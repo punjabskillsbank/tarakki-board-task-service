@@ -36,7 +36,7 @@ public class BoardMemberController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping({"/"})
+    @GetMapping({"", "/"})
     public ResponseEntity<List<BoardMemberDTO>> getBoardMembersByBoardId(@PathVariable Long boardId) {
         List<BoardMemberDTO> result = boardMemberService.getBoardMembersByBoardId(boardId);
         return new ResponseEntity<>(result, HttpStatus.OK);

@@ -2,6 +2,7 @@ package com.tarakki.boardtask.serviceImpl;
 
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.GroupDTO;
+import com.tarakki.boardtask.dto.GroupUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
@@ -82,6 +83,28 @@ public class GroupServiceImpl implements GroupService {
                 .orElseThrow(() -> new GroupNotFoundException(groupId));
 
         groupRepository.delete(group);
+    }
+
+    @Override
+    @Transactional
+    public GroupDTO patchGroupById(Long boardId, Long groupId, GroupUpdateDTO groupUpdateDTO) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        Group group = groupRepository.findById(groupId)
+                .filter(g -> g.getBoardId().equals(boardId))
+                .orElseThrow(() -> new GroupNotFoundException(groupId));
+
+        if (groupUpdateDTO.getPosition() != null && !groupUpdateDTO.getPosition().equals(group.getPosition())) {
+            if (isPositionOccupied(boardId, groupUpdateDTO.getPosition())) {
+                throw new PositionAlreadyExistsException(groupUpdateDTO.getPosition(), boardId);
+            }
+        }
+
+        modelMapper.map(groupUpdateDTO, group);
+
+        Group updatedGroup = groupRepository.save(group);
+        return modelMapper.map(updatedGroup, GroupDTO.class);
     }
 
     private boolean isPositionOccupied(Long boardId, Integer position) {

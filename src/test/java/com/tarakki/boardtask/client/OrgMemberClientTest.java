@@ -67,11 +67,15 @@ public class OrgMemberClientTest {
                 doReturn(responseSpec).when(requestHeadersSpec).retrieve();
         }
 
+        private static ParameterizedTypeReference<List<OrgMemberDTO>> anyMemberListType() {
+                return any();
+        }
+
         @Test
         void findOrgMemberById_shouldReturnMatchingOrgMember() {
 
                 stubRestClientChain();
-                when(responseSpec.body(any(ParameterizedTypeReference.class)))
+                when(responseSpec.body(anyMemberListType()))
                                 .thenReturn(List.of(orgMemberDto));
 
                 Optional<OrgMemberDTO> result = orgMemberClient.findOrgMemberById(orgId, orgMemberId);
@@ -85,7 +89,7 @@ public class OrgMemberClientTest {
         void findOrgMemberById_shouldReturnEmptyWhenOrgMemberIdIsNotInTheOrganization() {
 
                 stubRestClientChain();
-                when(responseSpec.body(any(ParameterizedTypeReference.class)))
+                when(responseSpec.body(anyMemberListType()))
                                 .thenReturn(List.of(orgMemberDto));
 
                 Optional<OrgMemberDTO> result = orgMemberClient
@@ -98,7 +102,7 @@ public class OrgMemberClientTest {
         void findOrgMemberById_shouldReturnEmptyWhenOrganizationHasNoMembers() {
 
                 stubRestClientChain();
-                when(responseSpec.body(any(ParameterizedTypeReference.class)))
+                when(responseSpec.body(anyMemberListType()))
                                 .thenReturn(List.of());
 
                 Optional<OrgMemberDTO> result = orgMemberClient.findOrgMemberById(orgId, orgMemberId);
@@ -110,7 +114,7 @@ public class OrgMemberClientTest {
         void findOrgMemberById_shouldReturnEmptyWhenResponseBodyIsNull() {
 
                 stubRestClientChain();
-                when(responseSpec.body(any(ParameterizedTypeReference.class)))
+                when(responseSpec.body(anyMemberListType()))
                                 .thenReturn(null);
 
                 Optional<OrgMemberDTO> result = orgMemberClient.findOrgMemberById(orgId, orgMemberId);
@@ -122,7 +126,7 @@ public class OrgMemberClientTest {
         void findOrgMemberById_shouldThrowOrganizationNotFoundExceptionWhenOrganizationDoesNotExist() {
 
                 stubRestClientChain();
-                when(responseSpec.body(any(ParameterizedTypeReference.class)))
+                when(responseSpec.body(anyMemberListType()))
                                 .thenThrow(HttpClientErrorException.create(
                                                 HttpStatus.NOT_FOUND, "Not Found", HttpHeaders.EMPTY, null, null));
 
@@ -136,7 +140,7 @@ public class OrgMemberClientTest {
         void findOrgMemberById_shouldPropagateRestClientExceptionWhenError() {
 
                 stubRestClientChain();
-                when(responseSpec.body(any(ParameterizedTypeReference.class)))
+                when(responseSpec.body(anyMemberListType()))
                                 .thenThrow(new RestClientException("500 Internal Server Error"));
 
                 assertThrows(RestClientException.class,
@@ -146,7 +150,8 @@ public class OrgMemberClientTest {
         private void stubExistsChain(UUID memberId) {
                 doReturn(requestHeadersUriSpec).when(orgServiceRestClient).get();
                 doReturn(requestHeadersSpec).when(requestHeadersUriSpec)
-                                .uri(eq(BoardMemberTestDataFactory.ORG_API_ENDPOINT + "/{orgId}/members/{memberId}/exists"),
+                                .uri(eq(BoardMemberTestDataFactory.ORG_API_ENDPOINT
+                                                + "/{orgId}/members/{memberId}/exists"),
                                                 eq(orgId), eq(memberId));
                 doReturn(responseSpec).when(requestHeadersSpec).retrieve();
         }

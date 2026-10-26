@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.GroupDTO;
+import com.tarakki.boardtask.dto.GroupUpdateDTO;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.service.GroupService;
 import com.tarakki.common.audit.annotation.Auditable;
@@ -35,6 +36,16 @@ public class GroupController {
     public ResponseEntity<Void> deleteGroup(@PathVariable Long groupId, @PathVariable Long boardId) {
         groupService.deleteGroup(groupId, boardId);
         return ResponseEntity.noContent().build();
+    }
+
+    @Auditable(eventName = "GROUP_UPDATED", entityName = "GROUP", entityClass = Group.class, entityIdArgSpel = "#groupId")
+    @PatchMapping("/{groupId}")
+    public ResponseEntity<GroupDTO> patchGroupById(
+            @PathVariable Long boardId,
+            @PathVariable Long groupId,
+            @RequestBody GroupUpdateDTO groupUpdateDTO) {
+        GroupDTO result = groupService.patchGroupById(boardId, groupId, groupUpdateDTO);
+        return ResponseEntity.ok(result);
     }
 
 }

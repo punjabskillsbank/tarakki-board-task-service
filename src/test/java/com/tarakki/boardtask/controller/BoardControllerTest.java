@@ -10,7 +10,6 @@ import com.tarakki.boardtask.service.BoardService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
-import org.mockito.ArgumentCaptor;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +21,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;

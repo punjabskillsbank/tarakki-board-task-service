@@ -1,15 +1,17 @@
 package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.GroupDTO;
+import com.tarakki.boardtask.dto.GroupUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.GlobalExceptionHandler;
+import com.tarakki.boardtask.exception.GroupNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
 import com.tarakki.boardtask.service.GroupService;
 import com.tarakki.boardtask.util.GroupTestDataFactory;
-import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -30,11 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @WebMvcTest(GroupController.class)
@@ -268,6 +267,76 @@ public class GroupControllerTest {
                 .andExpect(content().string(""));
         verify(groupService).deleteGroup(invalidGroupId, boardId);
 
+    }
+
+    @Test
+    void shouldPatchGroupByIdSuccessfully() throws Exception {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+        GroupDTO updatedGroupDTO = GroupTestDataFactory.createGroupDto();
+        updatedGroupDTO.setGroupName(updateDTO.getGroupName());
+        updatedGroupDTO.setPosition(updateDTO.getPosition());
+
+        when(groupService.patchGroupById(eq(boardId), eq(groupDto.getGroupId()), any(GroupUpdateDTO.class)))
+                .thenReturn(updatedGroupDTO);
+
+        mockMvc.perform(patch("/api/boards/{boardId}/groups/{groupId}", boardId, groupDto.getGroupId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groupId").value(updatedGroupDTO.getGroupId()))
+                .andExpect(jsonPath("$.boardId").value(updatedGroupDTO.getBoardId()))
+                .andExpect(jsonPath("$.groupName").value(updateDTO.getGroupName()))
+                .andExpect(jsonPath("$.position").value(updateDTO.getPosition()));
+
+        verify(groupService).patchGroupById(eq(boardId), eq(groupDto.getGroupId()), any(GroupUpdateDTO.class));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardNotFoundOnPatch() throws Exception {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+
+        when(groupService.patchGroupById(eq(boardId), eq(groupDto.getGroupId()), any(GroupUpdateDTO.class)))
+                .thenThrow(new BoardNotFoundException(boardId));
+
+        mockMvc.perform(patch("/api/boards/{boardId}/groups/{groupId}", boardId, groupDto.getGroupId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Board not found with id: " + boardId));
+
+        verify(groupService).patchGroupById(eq(boardId), eq(groupDto.getGroupId()), any(GroupUpdateDTO.class));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenGroupNotFoundOnPatch() throws Exception {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+
+        when(groupService.patchGroupById(eq(boardId), eq(invalidGroupId), any(GroupUpdateDTO.class)))
+                .thenThrow(new GroupNotFoundException(invalidGroupId));
+
+        mockMvc.perform(patch("/api/boards/{boardId}/groups/{groupId}", boardId, invalidGroupId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Group not found: " + invalidGroupId));
+
+        verify(groupService).patchGroupById(eq(boardId), eq(invalidGroupId), any(GroupUpdateDTO.class));
+    }
+
+    @Test
+    void shouldReturnConflictWhenPositionAlreadyExistsOnPatch() throws Exception {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+
+        when(groupService.patchGroupById(eq(boardId), eq(groupDto.getGroupId()), any(GroupUpdateDTO.class)))
+                .thenThrow(new PositionAlreadyExistsException(updateDTO.getPosition(), boardId));
+
+        mockMvc.perform(patch("/api/boards/{boardId}/groups/{groupId}", boardId, groupDto.getGroupId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("Position " + updateDTO.getPosition() + " already exists for board id: " + boardId));
+
+        verify(groupService).patchGroupById(eq(boardId), eq(groupDto.getGroupId()), any(GroupUpdateDTO.class));
     }
 
 }

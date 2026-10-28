@@ -2,9 +2,11 @@ package com.tarakki.boardtask.service;
 
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.GroupDTO;
+import com.tarakki.boardtask.dto.GroupUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.GroupNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
@@ -33,9 +35,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class GroupServiceTest {
@@ -329,6 +329,143 @@ public class GroupServiceTest {
         verify(groupRepository, never()).existsById(anyLong());
         verify(groupRepository, never()).deleteById(invalidGroupId);
 
+    }
+
+    @Test
+    void shouldPatchGroupSuccessfully() {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+        GroupDTO updatedDTO = GroupTestDataFactory.createGroupDto();
+        updatedDTO.setGroupName(updateDTO.getGroupName());
+        updatedDTO.setPosition(updateDTO.getPosition());
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupEntity));
+        when(groupRepository.existsByBoardIdAndPosition(boardId, updateDTO.getPosition())).thenReturn(false);
+        doNothing().when(modelMapper).map(any(GroupUpdateDTO.class), any(Group.class));
+        when(groupRepository.save(groupEntity)).thenReturn(groupEntity);
+        when(modelMapper.map(groupEntity, GroupDTO.class)).thenReturn(updatedDTO);
+
+        GroupDTO result = groupService.patchGroupById(boardId, groupId, updateDTO);
+
+        assertNotNull(result);
+        assertEquals(updateDTO.getGroupName(), result.getGroupName());
+        assertEquals(updateDTO.getPosition(), result.getPosition());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(groupId);
+        verify(groupRepository).existsByBoardIdAndPosition(boardId, updateDTO.getPosition());
+        verify(modelMapper).map(updateDTO, groupEntity);
+        verify(groupRepository).save(groupEntity);
+        verify(modelMapper).map(groupEntity, GroupDTO.class);
+    }
+
+    @Test
+    void shouldPatchGroupSuccessfullyWhenPositionIsSame() {
+        GroupUpdateDTO updateDTO = GroupUpdateDTO.builder()
+                .groupName("New Name")
+                .position(groupEntity.getPosition())
+                .build();
+        GroupDTO updatedDTO = GroupTestDataFactory.createGroupDto();
+        updatedDTO.setGroupName("New Name");
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupEntity));
+        doNothing().when(modelMapper).map(any(GroupUpdateDTO.class), any(Group.class));
+        when(groupRepository.save(groupEntity)).thenReturn(groupEntity);
+        when(modelMapper.map(groupEntity, GroupDTO.class)).thenReturn(updatedDTO);
+
+        GroupDTO result = groupService.patchGroupById(boardId, groupId, updateDTO);
+
+        assertNotNull(result);
+        verify(groupRepository, never()).existsByBoardIdAndPosition(anyLong(), anyInt());
+        verify(modelMapper).map(updateDTO, groupEntity);
+        verify(groupRepository).save(groupEntity);
+    }
+
+    @Test
+    void shouldPatchGroupSuccessfullyWhenPositionIsNull() {
+        GroupUpdateDTO updateDTO = GroupUpdateDTO.builder()
+                .groupName("New Name")
+                .position(null)
+                .build();
+        GroupDTO updatedDTO = GroupTestDataFactory.createGroupDto();
+        updatedDTO.setGroupName("New Name");
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupEntity));
+        doNothing().when(modelMapper).map(any(GroupUpdateDTO.class), any(Group.class));
+        when(groupRepository.save(groupEntity)).thenReturn(groupEntity);
+        when(modelMapper.map(groupEntity, GroupDTO.class)).thenReturn(updatedDTO);
+
+        GroupDTO result = groupService.patchGroupById(boardId, groupId, updateDTO);
+
+        assertNotNull(result);
+        verify(groupRepository, never()).existsByBoardIdAndPosition(anyLong(), anyInt());
+        verify(modelMapper).map(updateDTO, groupEntity);
+        verify(groupRepository).save(groupEntity);
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenBoardNotFoundOnPatch() {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+
+        when(boardRepository.findById(invalidBoardId)).thenReturn(Optional.empty());
+
+        assertThrows(BoardNotFoundException.class,
+                () -> groupService.patchGroupById(invalidBoardId, groupId, updateDTO));
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(groupRepository, never()).findById(anyLong());
+        verify(groupRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowGroupNotFoundExceptionWhenGroupNotFoundOnPatch() {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(invalidGroupId)).thenReturn(Optional.empty());
+
+        assertThrows(GroupNotFoundException.class,
+                () -> groupService.patchGroupById(boardId, invalidGroupId, updateDTO));
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(invalidGroupId);
+        verify(groupRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowGroupNotFoundExceptionWhenGroupBelongsToDifferentBoardOnPatch() {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+        Group otherBoardGroup = GroupTestDataFactory.createGroupEntity();
+        otherBoardGroup.setBoardId(999L);
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(otherBoardGroup));
+
+        assertThrows(GroupNotFoundException.class,
+                () -> groupService.patchGroupById(boardId, groupId, updateDTO));
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(groupId);
+        verify(groupRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowPositionAlreadyExistsExceptionWhenPositionOccupiedOnPatch() {
+        GroupUpdateDTO updateDTO = GroupTestDataFactory.createGroupUpdateDto();
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupEntity));
+        when(groupRepository.existsByBoardIdAndPosition(boardId, updateDTO.getPosition())).thenReturn(true);
+
+        assertThrows(PositionAlreadyExistsException.class,
+                () -> groupService.patchGroupById(boardId, groupId, updateDTO));
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(groupId);
+        verify(groupRepository).existsByBoardIdAndPosition(boardId, updateDTO.getPosition());
+        verify(groupRepository, never()).save(any());
     }
 
 }

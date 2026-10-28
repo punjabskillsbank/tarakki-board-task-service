@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.util;
 
 import com.tarakki.boardtask.dto.GroupDTO;
+import com.tarakki.boardtask.dto.GroupUpdateDTO;
 import com.tarakki.boardtask.entity.Group;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,9 @@ import java.util.UUID;
 public class GroupTestDataFactory {
     public static final Long GROUP_ID = 1L;
     public static final String GROUP_NAME = "Demo group";
+    public static final String UPDATED_GROUP_NAME = "Updated group";
     public static final int POSITION = 1;
+    public static final int UPDATED_POSITION = 2;
     public static final UUID CREATED_BY = UUID.randomUUID();
     public static final Long BOARD_ID = 1L;
     public static final Long INVALID_BOARD_ID = 999L;
@@ -33,10 +36,18 @@ public class GroupTestDataFactory {
 
     public static Group createGroupEntity() {
         Group group = new Group();
+        group.setGroupId(GROUP_ID);
         group.setBoardId(BOARD_ID);
         group.setGroupName(GROUP_NAME);
         group.setPosition(POSITION);
         group.setCreatedBy(CREATED_BY);
         return group;
+    }
+
+    public static GroupUpdateDTO createGroupUpdateDto() {
+        return GroupUpdateDTO.builder()
+                .groupName(UPDATED_GROUP_NAME)
+                .position(UPDATED_POSITION)
+                .build();
     }
 }

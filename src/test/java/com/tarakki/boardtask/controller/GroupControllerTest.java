@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -42,7 +43,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 public class GroupControllerTest {
 
     static final String MEMBER_ID_VALUE = "c0ffee00-0000-4000-8000-000000000001";
-    private static final UUID MEMBER_ID = UUID.fromString(MEMBER_ID_VALUE);
 
 
     @MockitoBean
@@ -66,7 +66,7 @@ public class GroupControllerTest {
     }
 
     @Test
-    void shouldSetCreatedByFromTheTokenAndIgnoreTheOneInTheBody() throws Exception {
+    void shouldIgnoreCreatedByInTheRequestAndLeaveIdentityForTheService() throws Exception {
 
         when(groupService.createGroupByBoardId(any(), eq(boardId))).thenReturn(groupDto);
         groupDto.setCreatedBy(UUID.randomUUID());
@@ -79,7 +79,7 @@ public class GroupControllerTest {
 
         ArgumentCaptor<GroupDTO> sentToService = ArgumentCaptor.forClass(GroupDTO.class);
         verify(groupService).createGroupByBoardId(sentToService.capture(), eq(boardId));
-        assertEquals(MEMBER_ID, sentToService.getValue().getCreatedBy());
+        assertNull(sentToService.getValue().getCreatedBy());
     }
 
     @Test

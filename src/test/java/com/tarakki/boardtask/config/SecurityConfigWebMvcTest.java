@@ -1,8 +1,14 @@
 package com.tarakki.boardtask.config;
 
 import com.tarakki.boardtask.controller.BoardController;
+import com.tarakki.boardtask.controller.BoardMemberController;
+import com.tarakki.boardtask.controller.GroupController;
+import com.tarakki.boardtask.controller.TaskController;
 import com.tarakki.boardtask.dto.BoardDTO;
+import com.tarakki.boardtask.service.BoardMemberService;
 import com.tarakki.boardtask.service.BoardService;
+import com.tarakki.boardtask.service.GroupService;
+import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.boardtask.util.JwtTestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,8 +30,9 @@ import org.springframework.web.context.WebApplicationContext;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -39,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(BoardController.class)
+@WebMvcTest({BoardController.class, GroupController.class, TaskController.class, BoardMemberController.class})
 @Import(SecurityConfig.class)
 @TestPropertySource(properties = {
         "jwt.secret=" + JwtTestDataFactory.SECRET,
@@ -67,6 +74,15 @@ class SecurityConfigWebMvcTest {
     @MockitoBean
     private BoardService boardService;
 
+    @MockitoBean
+    private GroupService groupService;
+
+    @MockitoBean
+    private TaskService taskService;
+
+    @MockitoBean
+    private BoardMemberService boardMemberService;
+
     private MockMvc mockMvc;
     private Long boardId;
     private UUID memberId;
@@ -86,19 +102,38 @@ class SecurityConfigWebMvcTest {
     }
 
     @Test
-    void shouldAllowRequestWithValidToken() throws Exception {
+    void shouldAllowRequestsAcrossAllApiFamiliesWithValidToken() throws Exception {
         when(boardService.getBoardById(boardId)).thenReturn(board);
+        when(groupService.getGroupsByBoardId(boardId)).thenReturn(List.of());
+        when(taskService.getTasksByBoardId(boardId)).thenReturn(List.of());
+        when(boardMemberService.getBoardMembersByBoardId(boardId)).thenReturn(List.of());
+        String authorization = bearer(JwtTestDataFactory.createValidToken(memberId));
 
         mockMvc.perform(get(protectedUrl)
-                        .header(HttpHeaders.AUTHORIZATION, bearer(JwtTestDataFactory.createValidToken(memberId))))
+                        .header(HttpHeaders.AUTHORIZATION, authorization))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.boardId").value(board.getBoardId()));
 
+        mockMvc.perform(get("/api/boards/{boardId}/groups", boardId)
+                        .header(HttpHeaders.AUTHORIZATION, authorization))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/{boardId}/task", boardId)
+                        .header(HttpHeaders.AUTHORIZATION, authorization))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/boards/{boardId}/members", boardId)
+                        .header(HttpHeaders.AUTHORIZATION, authorization))
+                .andExpect(status().isOk());
+
         verify(boardService).getBoardById(boardId);
+        verify(groupService).getGroupsByBoardId(boardId);
+        verify(taskService).getTasksByBoardId(boardId);
+        verify(boardMemberService).getBoardMembersByBoardId(boardId);
     }
 
     @Test
-    void shouldCreateBoardAsTheMemberInTheTokenEvenWhenTheBodyNamesSomeoneElse() throws Exception {
+    void shouldIgnoreCreatedByInRequestAndLeaveIdentityForTheService() throws Exception {
         BoardDTO request = BoardTestDataFactory.createBoardDTO();
         request.setCreatedBy(UUID.randomUUID());
         when(boardService.createBoard(any())).thenReturn(board);
@@ -111,20 +146,15 @@ class SecurityConfigWebMvcTest {
 
         ArgumentCaptor<BoardDTO> sentToService = ArgumentCaptor.forClass(BoardDTO.class);
         verify(boardService).createBoard(sentToService.capture());
-        assertEquals(memberId, sentToService.getValue().getCreatedBy());
+        assertNull(sentToService.getValue().getCreatedBy());
     }
 
     @Test
-    void shouldRejectCreateWhenTokenSubjectIsNotAMemberId() throws Exception {
-        assertRejected(post("/api/boards")
-                .header(HttpHeaders.AUTHORIZATION, bearer(JwtTestDataFactory.createValidTokenWithSubject("not-a-member-id")))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(BoardTestDataFactory.createBoardDTO())));
-    }
-
-    @Test
-    void shouldRejectRequestWithoutToken() throws Exception {
+    void shouldRejectUnauthenticatedRequestsAcrossAllApiFamilies() throws Exception {
         assertRejected(get(protectedUrl));
+        assertRejected(get("/api/boards/{boardId}/groups", boardId));
+        assertRejected(get("/api/{boardId}/task", boardId));
+        assertRejected(get("/api/boards/{boardId}/members", boardId));
     }
 
     @Test
@@ -138,7 +168,7 @@ class SecurityConfigWebMvcTest {
                         .header(HttpHeaders.AUTHORIZATION, bearer(JwtTestDataFactory.createValidToken(memberId))))
                 .andExpect(status().isNotFound());
 
-        verifyNoInteractions(boardService);
+        verifyNoInteractions(boardService, groupService, taskService, boardMemberService);
     }
 
     @Test
@@ -174,7 +204,7 @@ class SecurityConfigWebMvcTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED_ORIGIN));
 
-        verifyNoInteractions(boardService);
+        verifyNoInteractions(boardService, groupService, taskService, boardMemberService);
     }
 
     @Test
@@ -183,7 +213,7 @@ class SecurityConfigWebMvcTest {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isNotFound());
 
-        verifyNoInteractions(boardService);
+        verifyNoInteractions(boardService, groupService, taskService, boardMemberService);
     }
 
     // The rejected request must answer 401 with the plain-text message and never reach the service.
@@ -193,7 +223,7 @@ class SecurityConfigWebMvcTest {
                 .andExpect(header().exists(HttpHeaders.WWW_AUTHENTICATE))
                 .andExpect(content().string(UNAUTHENTICATED_BODY));
 
-        verifyNoInteractions(boardService);
+        verifyNoInteractions(boardService, groupService, taskService, boardMemberService);
     }
 
     private String bearer(String token) {

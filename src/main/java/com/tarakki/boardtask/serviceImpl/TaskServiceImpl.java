@@ -12,6 +12,7 @@ import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.service.TaskService;
+import com.tarakki.common.security.CurrentMember;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -35,6 +36,8 @@ public class TaskServiceImpl implements TaskService {
 
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        taskDTO.setCreatedBy(CurrentMember.require());
 
         if (!isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy())) {
             throw new OrgMemberNotFoundException(taskDTO.getCreatedBy(), board.getOrgId());

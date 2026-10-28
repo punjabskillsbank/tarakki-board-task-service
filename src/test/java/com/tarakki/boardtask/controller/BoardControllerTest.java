@@ -25,7 +25,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -44,7 +44,6 @@ import static com.tarakki.boardtask.util.BoardTestDataFactory.MISSING_BOARD_ID;
 class BoardControllerTest {
 
     static final String MEMBER_ID_VALUE = "c0ffee00-0000-4000-8000-000000000001";
-    private static final UUID MEMBER_ID = UUID.fromString(MEMBER_ID_VALUE);
 
 
     @Autowired
@@ -66,7 +65,7 @@ class BoardControllerTest {
     }
 
     @Test
-    void shouldSetCreatedByFromTheTokenAndIgnoreTheOneInTheBody() throws Exception {
+    void shouldIgnoreCreatedByInTheRequestAndLeaveIdentityForTheService() throws Exception {
 
         when(boardService.createBoard(any())).thenReturn(output);
         input.setCreatedBy(UUID.randomUUID());
@@ -79,7 +78,7 @@ class BoardControllerTest {
 
         ArgumentCaptor<BoardDTO> sentToService = ArgumentCaptor.forClass(BoardDTO.class);
         verify(boardService).createBoard(sentToService.capture());
-        assertEquals(MEMBER_ID, sentToService.getValue().getCreatedBy());
+        assertNull(sentToService.getValue().getCreatedBy());
     }
 
     @Test
@@ -303,4 +302,3 @@ class BoardControllerTest {
     }
 
 }
-

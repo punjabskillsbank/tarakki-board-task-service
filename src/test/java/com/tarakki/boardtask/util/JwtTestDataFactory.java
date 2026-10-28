@@ -25,12 +25,6 @@ public class JwtTestDataFactory {
         return encode(SECRET, memberId, now, now.plus(Duration.ofHours(1)));
     }
 
-    /** A correctly signed, unexpired token whose subject is not a member id. */
-    public static String createValidTokenWithSubject(String subject) {
-        Instant now = Instant.now();
-        return encode(SECRET, subject, now, now.plus(Duration.ofHours(1)));
-    }
-
     public static String createExpiredToken(UUID memberId) {
         Instant now = Instant.now();
         return encode(SECRET, memberId, now.minus(Duration.ofHours(2)), now.minus(Duration.ofHours(1)));

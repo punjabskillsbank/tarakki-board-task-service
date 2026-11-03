@@ -13,6 +13,7 @@ import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.GroupRepository;
 import com.tarakki.boardtask.service.GroupService;
+import com.tarakki.common.security.CurrentMember;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -35,6 +36,8 @@ public class GroupServiceImpl implements GroupService {
     public GroupDTO createGroupByBoardId(GroupDTO groupDTO, Long boardId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        groupDTO.setCreatedBy(CurrentMember.require());
 
         if (!isMemberInOrganization(board.getOrgId(), groupDTO.getCreatedBy())) {
             throw new OrgMemberNotFoundException(groupDTO.getCreatedBy(), board.getOrgId());

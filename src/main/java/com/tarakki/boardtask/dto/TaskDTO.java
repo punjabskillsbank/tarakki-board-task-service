@@ -1,5 +1,6 @@
 package com.tarakki.boardtask.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -30,7 +31,7 @@ public class TaskDTO {
     @NotNull
     private int position;
 
-    @NotNull
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private UUID createdBy;
 
     private LocalDateTime createdAt;

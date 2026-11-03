@@ -11,6 +11,7 @@ import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.serviceImpl.TaskServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
+import org.junit.jupiter.api.AfterEach;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Task;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,10 +22,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -57,6 +62,7 @@ public class TaskServiceTest {
     private Long boardId;
     private Long invalidBoardId;
     private Board board;
+    private UUID authenticatedMemberId;
 
     @BeforeEach
     void setUp() {
@@ -65,7 +71,16 @@ public class TaskServiceTest {
         boardId = TaskTestDataFactory.BOARD_ID;
         invalidBoardId = TaskTestDataFactory.INVALID_BOARD_ID;
         board = BoardTestDataFactory.createBoardEntity();
+        authenticatedMemberId = UUID.randomUUID();
+        taskDTO.setCreatedBy(UUID.randomUUID());
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(authenticatedMemberId.toString(), null, List.of()));
 
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -74,7 +89,7 @@ public class TaskServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
 
-        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), authenticatedMemberId))
                 .thenReturn(true);
 
         when(modelMapper.map(any(TaskDTO.class), eq(Task.class)))
@@ -93,10 +108,10 @@ public class TaskServiceTest {
         assertEquals(taskDTO.getGroupId(), result.getGroupId());
         assertEquals(taskDTO.getTitle(), result.getTitle());
         assertEquals(taskDTO.getPosition(), result.getPosition());
-        assertEquals(taskDTO.getCreatedBy(), result.getCreatedBy());
+        assertEquals(authenticatedMemberId, result.getCreatedBy());
 
         verify(boardRepository).findById(boardId);
-        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), authenticatedMemberId);
         verify(modelMapper).map(any(TaskDTO.class), eq(Task.class));
         verify(taskRepository).save(any(Task.class));
         verify(modelMapper).map(any(Task.class), eq(TaskDTO.class));
@@ -111,7 +126,7 @@ public class TaskServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
 
-        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), authenticatedMemberId))
                 .thenReturn(true);
 
         when(modelMapper.map(any(TaskDTO.class), eq(Task.class)))
@@ -128,11 +143,26 @@ public class TaskServiceTest {
         ArgumentCaptor<TaskDTO> mappedDto = ArgumentCaptor.forClass(TaskDTO.class);
         verify(modelMapper).map(mappedDto.capture(), eq(Task.class));
         assertEquals(boardId, mappedDto.getValue().getBoardId());
+        assertEquals(authenticatedMemberId, mappedDto.getValue().getCreatedBy());
 
         verify(boardRepository).findById(boardId);
-        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), authenticatedMemberId);
         verify(taskRepository).save(any(Task.class));
         verify(modelMapper).map(any(Task.class), eq(TaskDTO.class));
+    }
+
+    @Test
+    void createTaskByBoardId_shouldRejectWhenNoAuthenticatedMemberExists() {
+        SecurityContextHolder.clearContext();
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+
+        assertThrows(AuthenticationCredentialsNotFoundException.class,
+                () -> taskService.createTaskByBoardId(taskDTO, boardId));
+
+        verify(boardRepository).findById(boardId);
+        verify(orgMemberClient, never()).isMemberInOrganization(any(), any());
+        verify(taskRepository, never()).save(any(Task.class));
+        verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
@@ -159,17 +189,17 @@ public class TaskServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
 
-        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), authenticatedMemberId))
                 .thenReturn(false);
 
         OrgMemberNotFoundException exception = assertThrows(OrgMemberNotFoundException.class,
                 () -> taskService.createTaskByBoardId(taskDTO, boardId));
 
-        assertEquals("Member " + taskDTO.getCreatedBy() + " is not a member of organization " + board.getOrgId(),
+        assertEquals("Member " + authenticatedMemberId + " is not a member of organization " + board.getOrgId(),
                 exception.getMessage());
 
         verify(boardRepository).findById(boardId);
-        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), authenticatedMemberId);
         verify(taskRepository, never()).save(any(Task.class));
         verify(modelMapper, never()).map(any(), any());
     }
@@ -180,14 +210,14 @@ public class TaskServiceTest {
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.ofNullable(board));
 
-        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy()))
+        when(orgMemberClient.isMemberInOrganization(board.getOrgId(), authenticatedMemberId))
                 .thenThrow(new RestClientException("connection refused"));
 
         assertThrows(OrgServiceUnavailableException.class,
                 () -> taskService.createTaskByBoardId(taskDTO, boardId));
 
         verify(boardRepository).findById(boardId);
-        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), taskDTO.getCreatedBy());
+        verify(orgMemberClient).isMemberInOrganization(board.getOrgId(), authenticatedMemberId);
         verify(taskRepository, never()).save(any(Task.class));
         verify(modelMapper, never()).map(any(), any());
     }

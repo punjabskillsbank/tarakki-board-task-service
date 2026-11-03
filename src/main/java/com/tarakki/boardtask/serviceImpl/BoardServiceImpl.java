@@ -11,6 +11,7 @@ import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.common.entity.Organization;
 import com.tarakki.common.exceptionHandling.OrganizationNotFoundException;
+import com.tarakki.common.security.CurrentMember;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.OrganizationRepository;
@@ -37,6 +38,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     @Transactional
     public BoardDTO createBoard(BoardDTO boardDTO) {
+        boardDTO.setCreatedBy(CurrentMember.require());
 
         if (!isMemberInOrganization(boardDTO.getOrgId(), boardDTO.getCreatedBy())) {
             throw new OrgMemberNotFoundException(boardDTO.getCreatedBy(), boardDTO.getOrgId());

@@ -25,17 +25,14 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 
+import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TaskController.class)
 @Import(GlobalExceptionHandler.class)
@@ -55,12 +52,16 @@ public class TaskControllerTest {
     private ObjectMapper objectMapper;
 
     private Long boardId;
+    private Long taskId;
+    private Long invalidTaskId;
     private TaskDTO taskDto;
 
     @BeforeEach
     void setUp() {
         taskDto = TaskTestDataFactory.createTaskDto();
         boardId = TaskTestDataFactory.BOARD_ID;
+        taskId = TaskTestDataFactory.TASK_ID;
+        invalidTaskId = TaskTestDataFactory.INVALID_BOARD_ID;
     }
 
     @Test
@@ -169,7 +170,7 @@ public class TaskControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenBoardIdIsNotFound() throws Exception {
-        when(taskService.createTaskByBoardId(any(),eq(boardId)))
+        when(taskService.createTaskByBoardId(any(), eq(boardId)))
                 .thenThrow(new BoardNotFoundException(boardId));
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
@@ -238,5 +239,28 @@ public class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patchRequestDto)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldDeleteTaskByIdSuccessfully() throws Exception {
+        doNothing().when(taskService).deleteTaskById(boardId, taskId);
+
+        mockMvc.perform((delete("/api/{boardId}/task/{taskId}", boardId, taskId))
+                        .with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Task deleted successfully with id: " + taskId));
+        verify(taskService).deleteTaskById(boardId, taskId);
+
+    }
+
+    @Test
+    void shouldDeleteTaskByIdException() throws Exception {
+        doNothing().when(taskService).deleteTaskById(boardId,invalidTaskId);
+
+        mockMvc.perform((delete("/api/{boardId}/task/{taskId}",boardId,invalidTaskId))
+                .with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Task deleted successfully with id: " + invalidTaskId));
+        verify(taskService).deleteTaskById(boardId,invalidTaskId);
     }
 }

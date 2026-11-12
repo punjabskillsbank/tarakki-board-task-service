@@ -41,4 +41,13 @@ public class TaskController {
         TaskDTO updatedTask = taskService.patchTaskById(boardId, taskId, taskUpdateDTO);
         return ResponseEntity.ok(updatedTask);
     }
+
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<String> deleteTaskById(@PathVariable Long boardId, @PathVariable Long taskId) {
+
+        taskService.deleteTaskById(boardId, taskId);
+
+        return ResponseEntity.ok("Task deleted successfully with id: " + taskId);
+    }
+
 }

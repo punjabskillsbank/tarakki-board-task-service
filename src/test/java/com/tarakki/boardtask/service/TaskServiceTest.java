@@ -60,6 +60,7 @@ public class TaskServiceTest {
     private TaskDTO taskDTO;
     private Task taskEntity;
     private Long boardId;
+    private Long taskId;
     private Long invalidBoardId;
     private Board board;
     private UUID authenticatedMemberId;
@@ -69,6 +70,7 @@ public class TaskServiceTest {
         taskDTO = TaskTestDataFactory.createTaskDto();
         taskEntity = TaskTestDataFactory.createTaskEntity();
         boardId = TaskTestDataFactory.BOARD_ID;
+        taskId = TaskTestDataFactory.TASK_ID;
         invalidBoardId = TaskTestDataFactory.INVALID_BOARD_ID;
         board = BoardTestDataFactory.createBoardEntity();
         authenticatedMemberId = UUID.randomUUID();
@@ -315,6 +317,16 @@ public class TaskServiceTest {
         verify(taskRepository, times(1)).findById(taskId);
         verify(modelMapper, times(1)).map(incomingPatchDto, taskEntity);
         verify(taskRepository, times(1)).save(taskEntity);
+    }
+
+    @Test
+    void shouldDeleteTaskByIdSuccessfully() {
+        taskRepository.deleteById(taskId);
+
+        verify(taskRepository).deleteById(taskId);
+        verify(taskRepository, never()).existsById(anyLong());
+        verify(taskRepository, never()).deleteById(boardId);
+
     }
 
 }

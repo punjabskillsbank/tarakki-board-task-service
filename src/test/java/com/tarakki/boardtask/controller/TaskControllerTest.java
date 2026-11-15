@@ -247,20 +247,20 @@ public class TaskControllerTest {
 
         mockMvc.perform((delete("/api/{boardId}/task/{taskId}", boardId, taskId))
                         .with(jwt()))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Task deleted successfully with id: " + taskId));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
         verify(taskService).deleteTaskById(boardId, taskId);
 
     }
 
     @Test
     void shouldDeleteTaskByIdException() throws Exception {
-        doNothing().when(taskService).deleteTaskById(boardId,invalidTaskId);
+        doNothing().when(taskService).deleteTaskById(boardId, invalidTaskId);
 
-        mockMvc.perform((delete("/api/{boardId}/task/{taskId}",boardId,invalidTaskId))
-                .with(jwt()))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Task deleted successfully with id: " + invalidTaskId));
-        verify(taskService).deleteTaskById(boardId,invalidTaskId);
+        mockMvc.perform((delete("/api/{boardId}/task/{taskId}", boardId, invalidTaskId))
+                        .with(jwt()))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+        verify(taskService).deleteTaskById(boardId, invalidTaskId);
     }
 }

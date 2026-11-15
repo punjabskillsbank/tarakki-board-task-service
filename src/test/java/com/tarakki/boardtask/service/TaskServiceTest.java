@@ -6,6 +6,7 @@ import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
+import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.serviceImpl.TaskServiceImpl;
@@ -62,6 +63,7 @@ public class TaskServiceTest {
     private Long boardId;
     private Long taskId;
     private Long invalidBoardId;
+    private Long invalidTaskId;
     private Board board;
     private UUID authenticatedMemberId;
 
@@ -74,6 +76,7 @@ public class TaskServiceTest {
         invalidBoardId = TaskTestDataFactory.INVALID_BOARD_ID;
         board = BoardTestDataFactory.createBoardEntity();
         authenticatedMemberId = UUID.randomUUID();
+        invalidTaskId = TaskTestDataFactory.INVALID_BOARD_ID;
         taskDTO.setCreatedBy(UUID.randomUUID());
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(authenticatedMemberId.toString(), null, List.of()));
@@ -326,6 +329,44 @@ public class TaskServiceTest {
         verify(taskRepository).deleteById(taskId);
         verify(taskRepository, never()).existsById(anyLong());
         verify(taskRepository, never()).deleteById(boardId);
+
+    }
+
+    @Test
+    void shouldThrowTaskNotFoundExceptionWhenTaskIdDoesNotExist() {
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+
+        when(taskRepository.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        TaskNotFoundException taskNotFoundException = assertThrows(TaskNotFoundException.class,
+                () -> taskService.deleteTaskById(boardId, invalidTaskId)
+        );
+
+        assertEquals("Task not found with id: " + invalidTaskId, taskNotFoundException.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(taskRepository).findById(invalidTaskId);
+        verify(taskRepository, never()).delete(any());
+
+    }
+
+    @Test
+    void deleteTaskByTakId_shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
+
+        when(boardRepository.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException boardNotFoundException = assertThrows(BoardNotFoundException.class,
+                () -> taskService.deleteTaskById(invalidBoardId, taskId)
+        );
+
+        assertEquals("Board not found with id: " + invalidBoardId, boardNotFoundException.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(taskRepository,never()).findById(taskId);
+        verify(taskRepository, never()).delete(any());
 
     }
 

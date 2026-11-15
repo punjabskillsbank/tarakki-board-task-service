@@ -76,15 +76,16 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void deleteTaskById(Long boardId ,Long taskId) {
+    @Transactional
+    public void deleteTaskById(Long boardId, Long taskId) {
         boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(boardId));
 
         Task task = taskRepository.findById(taskId)
-                .filter((t)->t.getBoardId().equals(boardId))
+                .filter((t) -> t.getBoardId().equals(boardId))
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
-        taskRepository.deleteById(taskId);
+        taskRepository.delete(task);
     }
 
     private boolean isMemberInOrganization(Long orgId, UUID memberId) {

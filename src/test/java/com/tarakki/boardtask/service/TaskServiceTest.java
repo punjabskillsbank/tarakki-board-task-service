@@ -3,17 +3,21 @@ package com.tarakki.boardtask.service;
 import com.tarakki.boardtask.client.OrgMemberClient;
 import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.dto.TaskUpdateDTO;
+import com.tarakki.boardtask.entity.Board;
+import com.tarakki.boardtask.entity.Group;
+import com.tarakki.boardtask.entity.Task;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.GroupNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardRepository;
+import com.tarakki.boardtask.repository.GroupRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.serviceImpl.TaskServiceImpl;
 import com.tarakki.boardtask.util.BoardTestDataFactory;
+import com.tarakki.boardtask.util.GroupTestDataFactory;
 import com.tarakki.boardtask.util.TaskTestDataFactory;
 import org.junit.jupiter.api.AfterEach;
-import com.tarakki.boardtask.entity.Board;
-import com.tarakki.boardtask.entity.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +53,9 @@ public class TaskServiceTest {
     private BoardRepository boardRepository;
 
     @Mock
+    private GroupRepository groupRepository;
+
+    @Mock
     private OrgMemberClient orgMemberClient;
 
     @Mock
@@ -61,6 +68,9 @@ public class TaskServiceTest {
     private Task taskEntity;
     private Long boardId;
     private Long invalidBoardId;
+    private Long groupId;
+    private Long invalidGroupId;
+    private Group groupEntity;
     private Board board;
     private UUID authenticatedMemberId;
 
@@ -70,6 +80,9 @@ public class TaskServiceTest {
         taskEntity = TaskTestDataFactory.createTaskEntity();
         boardId = TaskTestDataFactory.BOARD_ID;
         invalidBoardId = TaskTestDataFactory.INVALID_BOARD_ID;
+        groupId = TaskTestDataFactory.GROUP_ID;
+        invalidGroupId = TaskTestDataFactory.INVALID_GROUP_ID;
+        groupEntity = GroupTestDataFactory.createGroupEntity();
         board = BoardTestDataFactory.createBoardEntity();
         authenticatedMemberId = UUID.randomUUID();
         taskDTO.setCreatedBy(UUID.randomUUID());
@@ -315,6 +328,93 @@ public class TaskServiceTest {
         verify(taskRepository, times(1)).findById(taskId);
         verify(modelMapper, times(1)).map(incomingPatchDto, taskEntity);
         verify(taskRepository, times(1)).save(taskEntity);
+    }
+
+    @Test
+    void shouldGetTasksByGroupIdSuccessfully() {
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupEntity));
+        when(taskRepository.findByBoardIdAndGroupId(boardId, groupId)).thenReturn(List.of(taskEntity));
+        when(modelMapper.map(taskEntity, TaskDTO.class)).thenReturn(taskDTO);
+
+        List<TaskDTO> result = taskService.getTasksByGroupId(boardId, groupId);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(taskDTO.getTaskId(), result.get(0).getTaskId());
+        assertEquals(taskDTO.getBoardId(), result.get(0).getBoardId());
+        assertEquals(taskDTO.getGroupId(), result.get(0).getGroupId());
+        assertEquals(taskDTO.getTitle(), result.get(0).getTitle());
+        assertEquals(taskDTO.getPosition(), result.get(0).getPosition());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(groupId);
+        verify(taskRepository).findByBoardIdAndGroupId(boardId, groupId);
+        verify(modelMapper).map(taskEntity, TaskDTO.class);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenGroupHasNoTasks() {
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupEntity));
+        when(taskRepository.findByBoardIdAndGroupId(boardId, groupId)).thenReturn(List.of());
+
+        List<TaskDTO> result = taskService.getTasksByGroupId(boardId, groupId);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(groupId);
+        verify(taskRepository).findByBoardIdAndGroupId(boardId, groupId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenGettingTasksByGroupForUnknownBoard() {
+        when(boardRepository.findById(invalidBoardId)).thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> taskService.getTasksByGroupId(invalidBoardId, groupId));
+
+        assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(groupRepository, never()).findById(anyLong());
+        verify(taskRepository, never()).findByBoardIdAndGroupId(anyLong(), anyLong());
+    }
+
+    @Test
+    void shouldThrowGroupNotFoundExceptionWhenGettingTasksForUnknownGroup() {
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(invalidGroupId)).thenReturn(Optional.empty());
+
+        GroupNotFoundException exception = assertThrows(GroupNotFoundException.class,
+                () -> taskService.getTasksByGroupId(boardId, invalidGroupId));
+
+        assertEquals("Group not found: " + invalidGroupId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(invalidGroupId);
+        verify(taskRepository, never()).findByBoardIdAndGroupId(anyLong(), anyLong());
+    }
+
+    @Test
+    void shouldThrowGroupNotFoundExceptionWhenGroupBelongsToDifferentBoard() {
+        Group otherBoardGroup = GroupTestDataFactory.createGroupEntity();
+        otherBoardGroup.setBoardId(999L);
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(otherBoardGroup));
+
+        GroupNotFoundException exception = assertThrows(GroupNotFoundException.class,
+                () -> taskService.getTasksByGroupId(boardId, groupId));
+
+        assertEquals("Group not found: " + groupId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(groupRepository).findById(groupId);
+        verify(taskRepository, never()).findByBoardIdAndGroupId(anyLong(), anyLong());
     }
 
 }

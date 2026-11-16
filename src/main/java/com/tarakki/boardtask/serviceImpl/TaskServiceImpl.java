@@ -6,10 +6,12 @@ import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Task;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.GroupNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.exception.TaskNotFoundException;
 import com.tarakki.boardtask.repository.BoardRepository;
+import com.tarakki.boardtask.repository.GroupRepository;
 import com.tarakki.boardtask.repository.TaskRepository;
 import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.common.security.CurrentMember;
@@ -27,6 +29,7 @@ import java.util.UUID;
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final BoardRepository boardRepository;
+    private final GroupRepository groupRepository;
     private final OrgMemberClient orgMemberClient;
     private final ModelMapper modelMapper;
 
@@ -76,6 +79,21 @@ public class TaskServiceImpl implements TaskService {
 
         Task updatedTask = taskRepository.save(task);
         return modelMapper.map(updatedTask, TaskDTO.class);
+    }
+
+    @Override
+    public List<TaskDTO> getTasksByGroupId(Long boardId, Long groupId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        groupRepository.findById(groupId)
+                .filter(group -> group.getBoardId().equals(boardId))
+                .orElseThrow(() -> new GroupNotFoundException(groupId));
+
+        List<Task> tasks = taskRepository.findByBoardIdAndGroupId(boardId, groupId);
+        return tasks.stream()
+                .map(task -> modelMapper.map(task, TaskDTO.class))
+                .toList();
     }
 
     private boolean isMemberInOrganization(Long orgId, UUID memberId) {

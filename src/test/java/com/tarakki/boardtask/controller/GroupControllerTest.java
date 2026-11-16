@@ -2,6 +2,7 @@ package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.GroupDTO;
 import com.tarakki.boardtask.dto.GroupUpdateDTO;
+import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.GlobalExceptionHandler;
 import com.tarakki.boardtask.exception.GroupNotFoundException;
@@ -9,7 +10,9 @@ import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.exception.PositionAlreadyExistsException;
 import com.tarakki.boardtask.service.GroupService;
+import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.boardtask.util.GroupTestDataFactory;
+import com.tarakki.boardtask.util.TaskTestDataFactory;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,6 +48,9 @@ public class GroupControllerTest {
 
     @MockitoBean
     private GroupService groupService;
+
+    @MockitoBean
+    private TaskService taskService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -337,6 +342,66 @@ public class GroupControllerTest {
                 .andExpect(content().string("Position " + updateDTO.getPosition() + " already exists for board id: " + boardId));
 
         verify(groupService).patchGroupById(eq(boardId), eq(groupDto.getGroupId()), any(GroupUpdateDTO.class));
+    }
+
+    @Test
+    void shouldGetTasksByGroupIdSuccessfully() throws Exception {
+        TaskDTO taskDto = TaskTestDataFactory.createTaskDto();
+
+        when(taskService.getTasksByGroupId(boardId, groupDto.getGroupId()))
+                .thenReturn(List.of(taskDto));
+
+        mockMvc.perform(get("/api/boards/{boardId}/groups/{groupId}/tasks", boardId, groupDto.getGroupId())
+                        .with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].taskId").value(taskDto.getTaskId()))
+                .andExpect(jsonPath("$[0].boardId").value(taskDto.getBoardId()))
+                .andExpect(jsonPath("$[0].groupId").value(taskDto.getGroupId()))
+                .andExpect(jsonPath("$[0].title").value(taskDto.getTitle()))
+                .andExpect(jsonPath("$[0].position").value(taskDto.getPosition()))
+                .andExpect(jsonPath("$[0].createdBy").value(taskDto.getCreatedBy().toString()));
+
+        verify(taskService).getTasksByGroupId(boardId, groupDto.getGroupId());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenGroupHasNoTasks() throws Exception {
+        when(taskService.getTasksByGroupId(boardId, groupDto.getGroupId()))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/boards/{boardId}/groups/{groupId}/tasks", boardId, groupDto.getGroupId())
+                        .with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(taskService).getTasksByGroupId(boardId, groupDto.getGroupId());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardNotFoundOnGetTasksByGroupId() throws Exception {
+        when(taskService.getTasksByGroupId(boardId, groupDto.getGroupId()))
+                .thenThrow(new BoardNotFoundException(boardId));
+
+        mockMvc.perform(get("/api/boards/{boardId}/groups/{groupId}/tasks", boardId, groupDto.getGroupId())
+                        .with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Board not found with id: " + boardId));
+
+        verify(taskService).getTasksByGroupId(boardId, groupDto.getGroupId());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenGroupNotFoundOnGetTasksByGroupId() throws Exception {
+        when(taskService.getTasksByGroupId(boardId, invalidGroupId))
+                .thenThrow(new GroupNotFoundException(invalidGroupId));
+
+        mockMvc.perform(get("/api/boards/{boardId}/groups/{groupId}/tasks", boardId, invalidGroupId)
+                        .with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Group not found: " + invalidGroupId));
+
+        verify(taskService).getTasksByGroupId(boardId, invalidGroupId);
     }
 
 }

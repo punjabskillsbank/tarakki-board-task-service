@@ -11,6 +11,7 @@ import java.util.UUID;
 public class TaskTestDataFactory {
     public static final Long TASK_ID = 10L;
     public static final Long GROUP_ID = 1L;
+    public static final Long INVALID_GROUP_ID = 999L;
     public static final int POSITION = 2;
     public static final String TITLE = "Demo title";
     public static final UUID CREATED_BY = UUID.randomUUID();

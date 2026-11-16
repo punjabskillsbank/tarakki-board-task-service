@@ -2,8 +2,10 @@ package com.tarakki.boardtask.controller;
 
 import com.tarakki.boardtask.dto.GroupDTO;
 import com.tarakki.boardtask.dto.GroupUpdateDTO;
+import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.entity.Group;
 import com.tarakki.boardtask.service.GroupService;
+import com.tarakki.boardtask.service.TaskService;
 import com.tarakki.common.audit.annotation.Auditable;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -18,6 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 public class GroupController {
     private final GroupService groupService;
+    private final TaskService taskService;
 
     @PostMapping
     public ResponseEntity<GroupDTO> createGroupByBoardId(@Valid @RequestBody GroupDTO groupDTO, @PathVariable Long boardId) {
@@ -45,6 +48,14 @@ public class GroupController {
             @PathVariable Long groupId,
             @RequestBody GroupUpdateDTO groupUpdateDTO) {
         GroupDTO result = groupService.patchGroupById(boardId, groupId, groupUpdateDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{groupId}/tasks")
+    public ResponseEntity<List<TaskDTO>> getTasksByGroupId(
+            @PathVariable Long boardId,
+            @PathVariable Long groupId) {
+        List<TaskDTO> result = taskService.getTasksByGroupId(boardId, groupId);
         return ResponseEntity.ok(result);
     }
 

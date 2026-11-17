@@ -5,6 +5,7 @@ import com.tarakki.boardtask.dto.TaskDTO;
 import com.tarakki.boardtask.dto.TaskUpdateDTO;
 import com.tarakki.boardtask.entity.Board;
 import com.tarakki.boardtask.entity.Task;
+import com.tarakki.boardtask.exception.*;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
 import com.tarakki.boardtask.exception.GroupNotFoundException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
@@ -94,6 +95,19 @@ public class TaskServiceImpl implements TaskService {
         return tasks.stream()
                 .map(task -> modelMapper.map(task, TaskDTO.class))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteTaskById(Long boardId, Long taskId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        Task task = taskRepository.findById(taskId)
+                .filter((t) -> t.getBoardId().equals(boardId))
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        taskRepository.delete(task);
     }
 
     private boolean isMemberInOrganization(Long orgId, UUID memberId) {

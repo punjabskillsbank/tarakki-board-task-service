@@ -13,4 +13,6 @@ public interface TaskService {
     TaskDTO patchTaskById(Long boardId, Long taskId, TaskUpdateDTO taskUpdateDTO);
 
     void deleteTaskById(Long boardId, Long taskId);
+
+    List<TaskDTO> getTasksByGroupId(Long boardId, Long groupId);
 }

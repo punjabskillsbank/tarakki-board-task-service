@@ -470,4 +470,71 @@ public class TaskServiceTest {
         verify(taskRepository, never()).findByBoardIdAndGroupId(anyLong(), anyLong());
     }
 
+    @Test
+    void shouldGetTaskByIdSuccessfully() {
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(taskEntity));
+        when(modelMapper.map(taskEntity, TaskDTO.class)).thenReturn(taskDTO);
+
+        TaskDTO result = taskService.getTaskById(boardId, taskId);
+
+        assertNotNull(result);
+        assertEquals(taskDTO.getTaskId(), result.getTaskId());
+        assertEquals(taskDTO.getBoardId(), result.getBoardId());
+        assertEquals(taskDTO.getGroupId(), result.getGroupId());
+        assertEquals(taskDTO.getTitle(), result.getTitle());
+        assertEquals(taskDTO.getPosition(), result.getPosition());
+
+        verify(boardRepository).findById(boardId);
+        verify(taskRepository).findById(taskId);
+        verify(modelMapper).map(taskEntity, TaskDTO.class);
+    }
+
+    @Test
+    void shouldThrowBoardNotFoundExceptionWhenGettingTaskForUnknownBoard() {
+        when(boardRepository.findById(invalidBoardId)).thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> taskService.getTaskById(invalidBoardId, taskId));
+
+        assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(taskRepository, never()).findById(anyLong());
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void shouldThrowTaskNotFoundExceptionWhenGettingTaskForUnknownTaskId() {
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(taskRepository.findById(invalidTaskId)).thenReturn(Optional.empty());
+
+        TaskNotFoundException exception = assertThrows(TaskNotFoundException.class,
+                () -> taskService.getTaskById(boardId, invalidTaskId));
+
+        assertEquals("Task not found with id: " + invalidTaskId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(taskRepository).findById(invalidTaskId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void shouldThrowTaskNotFoundExceptionWhenTaskBelongsToDifferentBoard() {
+        Task otherBoardTask = TaskTestDataFactory.createTaskEntity();
+        otherBoardTask.setBoardId(999L);
+
+        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(otherBoardTask));
+
+        TaskNotFoundException exception = assertThrows(TaskNotFoundException.class,
+                () -> taskService.getTaskById(boardId, taskId));
+
+        assertEquals("Task not found with id: " + taskId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(taskRepository).findById(taskId);
+        verify(modelMapper, never()).map(any(), any());
+    }
+
 }

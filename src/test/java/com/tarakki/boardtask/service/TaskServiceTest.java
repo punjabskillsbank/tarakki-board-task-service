@@ -125,6 +125,7 @@ public class TaskServiceTest {
         assertEquals(taskDTO.getBoardId(), result.getBoardId());
         assertEquals(taskDTO.getGroupId(), result.getGroupId());
         assertEquals(taskDTO.getTitle(), result.getTitle());
+        assertEquals(taskDTO.getDescription(), result.getDescription());
         assertEquals(taskDTO.getPosition(), result.getPosition());
         assertEquals(authenticatedMemberId, result.getCreatedBy());
 
@@ -327,6 +328,7 @@ public class TaskServiceTest {
 
         assertNotNull(result);
         assertEquals(expectedResponseDto.getTitle(), result.getTitle());
+        assertEquals(expectedResponseDto.getDescription(), result.getDescription());
         assertEquals(expectedResponseDto.getPosition(), result.getPosition());
 
         verify(boardRepository, times(1)).findById(boardId);
@@ -483,6 +485,7 @@ public class TaskServiceTest {
         assertEquals(taskDTO.getBoardId(), result.getBoardId());
         assertEquals(taskDTO.getGroupId(), result.getGroupId());
         assertEquals(taskDTO.getTitle(), result.getTitle());
+        assertEquals(taskDTO.getDescription(), result.getDescription());
         assertEquals(taskDTO.getPosition(), result.getPosition());
 
         verify(boardRepository).findById(boardId);

@@ -126,6 +126,7 @@ public class TaskControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.groupId").value(taskDto.getGroupId()))
                 .andExpect(jsonPath("$.title").value(taskDto.getTitle()))
+                .andExpect(jsonPath("$.description").value(taskDto.getDescription()))
                 .andExpect(jsonPath("$.position").value(taskDto.getPosition()))
                 .andExpect(jsonPath("$.createdBy").value(taskDto.getCreatedBy().toString()));
 
@@ -140,6 +141,7 @@ public class TaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].groupId").value(taskDto.getGroupId()))
                 .andExpect(jsonPath("$[0].title").value(taskDto.getTitle()))
+                .andExpect(jsonPath("$[0].description").value(taskDto.getDescription()))
                 .andExpect(jsonPath("$[0].position").value(taskDto.getPosition()));
     }
 
@@ -208,6 +210,18 @@ public class TaskControllerTest {
     }
 
     @Test
+    void shouldReturnBadRequestWhenDescriptionIsMissing() throws Exception {
+
+        taskDto.setDescription(null);
+
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void shouldPatchTaskSuccessfully() throws Exception {
         Long taskId = TaskTestDataFactory.TASK_ID;
         TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
@@ -222,6 +236,7 @@ public class TaskControllerTest {
                         .content(objectMapper.writeValueAsString(patchRequestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(patchedResponseDto.getTitle()))
+                .andExpect(jsonPath("$.description").value(patchedResponseDto.getDescription()))
                 .andExpect(jsonPath("$.position").value(patchedResponseDto.getPosition()))
                 .andExpect(jsonPath("$.groupId").value(patchedResponseDto.getGroupId()));
     }
@@ -275,6 +290,7 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.boardId").value(taskDto.getBoardId()))
                 .andExpect(jsonPath("$.groupId").value(taskDto.getGroupId()))
                 .andExpect(jsonPath("$.title").value(taskDto.getTitle()))
+                .andExpect(jsonPath("$.description").value(taskDto.getDescription()))
                 .andExpect(jsonPath("$.position").value(taskDto.getPosition()))
                 .andExpect(jsonPath("$.createdBy").value(taskDto.getCreatedBy().toString()));
 

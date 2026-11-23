@@ -3,6 +3,7 @@ package com.tarakki.boardtask.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,10 @@ public class TaskDTO {
 
     @NotBlank
     private String title;
+
+    @NotBlank
+    @Size(max = 500)
+    private String description;
 
     @NotNull
     private int position;

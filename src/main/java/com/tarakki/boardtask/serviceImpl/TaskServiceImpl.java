@@ -110,6 +110,18 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.delete(task);
     }
 
+    @Override
+    public TaskDTO getTaskById(Long boardId, Long taskId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        Task task = taskRepository.findById(taskId)
+                .filter(t -> t.getBoardId().equals(boardId))
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        return modelMapper.map(task, TaskDTO.class);
+    }
+
     private boolean isMemberInOrganization(Long orgId, UUID memberId) {
         try {
             return orgMemberClient.isMemberInOrganization(orgId, memberId);

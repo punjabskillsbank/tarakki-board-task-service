@@ -51,4 +51,12 @@ public class TaskController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{taskId}")
+    public ResponseEntity<TaskDTO> getTaskById(
+            @PathVariable Long boardId,
+            @PathVariable Long taskId) {
+        TaskDTO taskDTO = taskService.getTaskById(boardId, taskId);
+        return ResponseEntity.ok(taskDTO);
+    }
+
 }

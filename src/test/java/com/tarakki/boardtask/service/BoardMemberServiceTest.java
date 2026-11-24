@@ -10,6 +10,7 @@ import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardMemberNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.LastBoardAdminException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
@@ -490,5 +491,120 @@ public class BoardMemberServiceTest {
         verify(boardMemberRepository).findById(boardMemberId);
         verify(boardMemberRepository, never()).save(any());
         verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void deleteBoardMember_shouldDeleteBoardMemberWhenRoleIsMember() {
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(boardMemberEntity));
+
+        boardMemberService.deleteBoardMember(boardId, boardMemberId);
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(boardMemberRepository, never()).countByBoardIdAndRole(anyLong(), any());
+        verify(boardMemberRepository).delete(boardMemberEntity);
+    }
+
+    @Test
+    void deleteBoardMember_shouldDeleteBoardAdminWhenAnotherAdminExists() {
+        BoardMember boardAdmin = BoardMemberTestDataFactory.createBoardAdminEntity();
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(boardAdmin));
+        when(boardMemberRepository.countByBoardIdAndRole(boardId, BoardRole.BOARD_ADMIN))
+                .thenReturn(2L);
+
+        boardMemberService.deleteBoardMember(boardId, boardMemberId);
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(boardMemberRepository).countByBoardIdAndRole(boardId, BoardRole.BOARD_ADMIN);
+        verify(boardMemberRepository).delete(boardAdmin);
+    }
+
+    @Test
+    void deleteBoardMember_shouldThrowLastBoardAdminExceptionWhenMemberIsLastAdmin() {
+        BoardMember boardAdmin = BoardMemberTestDataFactory.createBoardAdminEntity();
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(boardAdmin));
+        when(boardMemberRepository.countByBoardIdAndRole(boardId, BoardRole.BOARD_ADMIN))
+                .thenReturn(1L);
+
+        LastBoardAdminException exception = assertThrows(LastBoardAdminException.class,
+                () -> boardMemberService.deleteBoardMember(boardId, boardMemberId)
+        );
+
+        assertEquals("Cannot remove the last admin of board with id: " + boardId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(boardMemberRepository).countByBoardIdAndRole(boardId, BoardRole.BOARD_ADMIN);
+        verify(boardMemberRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteBoardMember_shouldThrowBoardNotFoundExceptionWhenBoardIdDoesNotExist() {
+        when(boardRepository.findById(invalidBoardId))
+                .thenReturn(Optional.empty());
+
+        BoardNotFoundException exception = assertThrows(BoardNotFoundException.class,
+                () -> boardMemberService.deleteBoardMember(invalidBoardId, boardMemberId)
+        );
+
+        assertEquals("Board not found with id: " + invalidBoardId, exception.getMessage());
+
+        verify(boardRepository).findById(invalidBoardId);
+        verify(boardMemberRepository, never()).findById(anyLong());
+        verify(boardMemberRepository, never()).countByBoardIdAndRole(anyLong(), any());
+        verify(boardMemberRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteBoardMember_shouldThrowBoardMemberNotFoundExceptionWhenBoardMemberDoesNotExist() {
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(invalidBoardMemberId))
+                .thenReturn(Optional.empty());
+
+        BoardMemberNotFoundException exception = assertThrows(BoardMemberNotFoundException.class,
+                () -> boardMemberService.deleteBoardMember(boardId, invalidBoardMemberId)
+        );
+
+        assertEquals("Board member not found with id: " + invalidBoardMemberId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(invalidBoardMemberId);
+        verify(boardMemberRepository, never()).countByBoardIdAndRole(anyLong(), any());
+        verify(boardMemberRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteBoardMember_shouldThrowBoardMemberNotFoundExceptionWhenBoardMemberDoesNotBelongToBoard() {
+        BoardMember memberFromDifferentBoard = BoardMemberTestDataFactory.createBoardMemberEntity();
+        memberFromDifferentBoard.setBoardId(999L);
+
+        when(boardRepository.findById(boardId))
+                .thenReturn(Optional.of(board));
+        when(boardMemberRepository.findById(boardMemberId))
+                .thenReturn(Optional.of(memberFromDifferentBoard));
+
+        BoardMemberNotFoundException exception = assertThrows(BoardMemberNotFoundException.class,
+                () -> boardMemberService.deleteBoardMember(boardId, boardMemberId)
+        );
+
+        assertEquals("Board member not found with id: " + boardMemberId, exception.getMessage());
+
+        verify(boardRepository).findById(boardId);
+        verify(boardMemberRepository).findById(boardMemberId);
+        verify(boardMemberRepository, never()).countByBoardIdAndRole(anyLong(), any());
+        verify(boardMemberRepository, never()).delete(any());
     }
 }

@@ -1,6 +1,7 @@
 package com.tarakki.boardtask.repository;
 
 import com.tarakki.boardtask.entity.BoardMember;
+import com.tarakki.boardtask.enums.BoardRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +14,6 @@ public interface BoardMemberRepository extends JpaRepository<BoardMember, Long> 
     boolean existsByBoardIdAndMemberId(Long boardId, UUID memberId);
 
     List<BoardMember> findByBoardId(Long boardId);
+
+    long countByBoardIdAndRole(Long boardId, BoardRole role);
 }

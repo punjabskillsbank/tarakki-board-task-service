@@ -15,4 +15,6 @@ public interface BoardMemberService {
     List<BoardMemberDTO> getBoardMembersByBoardId(Long boardId);
 
     BoardMemberDTO patchBoardMemberById(Long boardId, Long boardMemberId, BoardMemberUpdateDTO boardMemberUpdateDTO);
+
+    void deleteBoardMember(Long boardId, Long boardMemberId);
 }

@@ -263,4 +263,47 @@ public class TaskControllerTest {
                 .andExpect(content().string(""));
         verify(taskService).deleteTaskById(boardId, invalidTaskId);
     }
+
+    @Test
+    void shouldGetTaskByIdSuccessfully() throws Exception {
+        when(taskService.getTaskById(boardId, taskId)).thenReturn(taskDto);
+
+        mockMvc.perform(get("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.taskId").value(taskDto.getTaskId()))
+                .andExpect(jsonPath("$.boardId").value(taskDto.getBoardId()))
+                .andExpect(jsonPath("$.groupId").value(taskDto.getGroupId()))
+                .andExpect(jsonPath("$.title").value(taskDto.getTitle()))
+                .andExpect(jsonPath("$.position").value(taskDto.getPosition()))
+                .andExpect(jsonPath("$.createdBy").value(taskDto.getCreatedBy().toString()));
+
+        verify(taskService).getTaskById(boardId, taskId);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardNotFoundOnGetTaskById() throws Exception {
+        when(taskService.getTaskById(boardId, taskId))
+                .thenThrow(new BoardNotFoundException(boardId));
+
+        mockMvc.perform(get("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Board not found with id: " + boardId));
+
+        verify(taskService).getTaskById(boardId, taskId);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenTaskNotFoundOnGetTaskById() throws Exception {
+        when(taskService.getTaskById(boardId, taskId))
+                .thenThrow(new TaskNotFoundException(taskId));
+
+        mockMvc.perform(get("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Task not found with id: " + taskId));
+
+        verify(taskService).getTaskById(boardId, taskId);
+    }
 }

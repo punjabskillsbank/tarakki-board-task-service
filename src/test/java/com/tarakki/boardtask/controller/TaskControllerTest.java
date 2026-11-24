@@ -222,6 +222,30 @@ public class TaskControllerTest {
     }
 
     @Test
+    void shouldReturnBadRequestWhenDescriptionExceedsMaxLength() throws Exception {
+
+        taskDto.setDescription(TaskTestDataFactory.DESCRIPTION_501_CHARS);
+
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenDescriptionIsBlank() throws Exception {
+
+        taskDto.setDescription(TaskTestDataFactory.BLANK_DESCRIPTION);
+
+        mockMvc.perform(post("/api/{boardId}/task", boardId)
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void shouldPatchTaskSuccessfully() throws Exception {
         Long taskId = TaskTestDataFactory.TASK_ID;
         TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
@@ -254,6 +278,19 @@ public class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patchRequestDto)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenPatchDescriptionExceedsMaxLength() throws Exception {
+        Long taskId = TaskTestDataFactory.TASK_ID;
+        TaskUpdateDTO patchRequestDto = TaskTestDataFactory.createTaskUpdateDto();
+        patchRequestDto.setDescription(TaskTestDataFactory.DESCRIPTION_501_CHARS);
+
+        mockMvc.perform(patch("/api/{boardId}/task/{taskId}", boardId, taskId)
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchRequestDto)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -15,6 +15,8 @@ public class TaskTestDataFactory {
     public static final int POSITION = 2;
     public static final String TITLE = "Demo title";
     public static final String DESCRIPTION = "Demo description";
+    public static final String DESCRIPTION_501_CHARS = "a".repeat(501);
+    public static final String BLANK_DESCRIPTION = "   ";
     public static final UUID CREATED_BY = UUID.randomUUID();
     public static final Long BOARD_ID  = 1L;
     public static final Long INVALID_BOARD_ID  = 999L;

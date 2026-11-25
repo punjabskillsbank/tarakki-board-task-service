@@ -14,6 +14,9 @@ public class TaskTestDataFactory {
     public static final Long INVALID_GROUP_ID = 999L;
     public static final int POSITION = 2;
     public static final String TITLE = "Demo title";
+    public static final String DESCRIPTION = "Demo description";
+    public static final String DESCRIPTION_501_CHARS = "a".repeat(501);
+    public static final String BLANK_DESCRIPTION = "   ";
     public static final UUID CREATED_BY = UUID.randomUUID();
     public static final Long BOARD_ID  = 1L;
     public static final Long INVALID_BOARD_ID  = 999L;
@@ -27,6 +30,7 @@ public class TaskTestDataFactory {
         taskDTO.setBoardId(BOARD_ID);
         taskDTO.setGroupId(GROUP_ID);
         taskDTO.setTitle(TITLE);
+        taskDTO.setDescription(DESCRIPTION);
         taskDTO.setPosition(POSITION);
         taskDTO.setCreatedBy(CREATED_BY);
         taskDTO.setCreatedAt(CREATED_AT);
@@ -37,6 +41,7 @@ public class TaskTestDataFactory {
     public static TaskUpdateDTO createTaskUpdateDto() {
         TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO();
         taskUpdateDTO.setTitle(TITLE);
+        taskUpdateDTO.setDescription(DESCRIPTION);
         taskUpdateDTO.setPosition(POSITION);
         taskUpdateDTO.setGroupId(GROUP_ID);
         return taskUpdateDTO;
@@ -47,6 +52,7 @@ public class TaskTestDataFactory {
         task.setBoardId(BOARD_ID);
         task.setGroupId(GROUP_ID);
         task.setTitle(TITLE);
+        task.setDescription(DESCRIPTION);
         task.setPosition(POSITION);
         task.setCreatedBy(CREATED_BY);
         return task;

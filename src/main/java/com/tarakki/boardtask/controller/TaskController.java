@@ -36,7 +36,7 @@ public class TaskController {
     public ResponseEntity<TaskDTO> patchTaskById(
             @PathVariable Long boardId,
             @PathVariable Long taskId,
-            @RequestBody TaskUpdateDTO taskUpdateDTO) {
+            @Valid @RequestBody TaskUpdateDTO taskUpdateDTO) {
 
         TaskDTO updatedTask = taskService.patchTaskById(boardId, taskId, taskUpdateDTO);
         return ResponseEntity.ok(updatedTask);

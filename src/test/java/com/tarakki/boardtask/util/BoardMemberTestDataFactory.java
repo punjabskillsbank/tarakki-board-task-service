@@ -52,6 +52,12 @@ public class BoardMemberTestDataFactory {
         return boardMember;
     }
 
+    public static BoardMember createBoardAdminEntity() {
+        BoardMember boardAdmin = createBoardMemberEntity();
+        boardAdmin.setRole(BoardRole.BOARD_ADMIN);
+        return boardAdmin;
+    }
+
     public static OrgMemberDTO createOrgMemberDto() {
         OrgMemberDTO orgMemberDTO = new OrgMemberDTO();
         orgMemberDTO.setOrgMemberId(ORG_MEMBER_ID);

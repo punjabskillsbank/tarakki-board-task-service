@@ -51,4 +51,12 @@ public class BoardMemberController {
         BoardMemberDTO result = boardMemberService.patchBoardMemberById(boardId, boardMemberId, boardMemberUpdateDTO);
         return ResponseEntity.ok(result);
     }
+
+    @Auditable(eventName = "BOARD_MEMBER_DELETED", entityName = "BOARD_MEMBER", entityClass = BoardMember.class, entityIdArgSpel = "#boardMemberId")
+    @DeleteMapping("/{boardMemberId}")
+    public ResponseEntity<Void> deleteBoardMember(@PathVariable Long boardId,
+                                                  @PathVariable Long boardMemberId) {
+        boardMemberService.deleteBoardMember(boardId, boardMemberId);
+        return ResponseEntity.noContent().build();
+    }
 }

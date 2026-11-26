@@ -58,6 +58,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+    @ExceptionHandler(LastBoardAdminException.class)
+    public ResponseEntity<String> handleLastBoardAdminException(LastBoardAdminException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
     @ExceptionHandler(OrgServiceUnavailableException.class)
     public ResponseEntity<String> handleOrgServiceUnavailableException(OrgServiceUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ex.getMessage());

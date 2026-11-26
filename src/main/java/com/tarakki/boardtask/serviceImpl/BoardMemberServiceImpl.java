@@ -10,6 +10,7 @@ import com.tarakki.boardtask.enums.BoardRole;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardMemberNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.LastBoardAdminException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.repository.BoardMemberRepository;
@@ -103,6 +104,23 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         return modelMapper.map(updatedBoardMember, BoardMemberDTO.class);
     }
 
+    @Override
+    @Transactional
+    public void deleteBoardMember(Long boardId, Long boardMemberId) {
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardNotFoundException(boardId));
+
+        BoardMember boardMember = boardMemberRepository.findById(boardMemberId)
+                .filter(member -> member.getBoardId().equals(boardId))
+                .orElseThrow(() -> new BoardMemberNotFoundException(boardMemberId));
+
+        if (isLastBoardAdmin(boardMember)) {
+            throw new LastBoardAdminException(boardId);
+        }
+
+        boardMemberRepository.delete(boardMember);
+    }
+
     private OrgMemberDTO findOrgMember(Long orgId, Long orgMemberId) {
         try {
             return orgMemberClient.findOrgMemberById(orgId, orgMemberId)
@@ -114,5 +132,10 @@ public class BoardMemberServiceImpl implements BoardMemberService {
 
     private boolean isAlreadyOnBoard(Long boardId, UUID memberId) {
         return boardMemberRepository.existsByBoardIdAndMemberId(boardId, memberId);
+    }
+
+    private boolean isLastBoardAdmin(BoardMember boardMember) {
+        return boardMember.getRole() == BoardRole.BOARD_ADMIN
+                && boardMemberRepository.countByBoardIdAndRole(boardMember.getBoardId(), BoardRole.BOARD_ADMIN) <= 1;
     }
 }

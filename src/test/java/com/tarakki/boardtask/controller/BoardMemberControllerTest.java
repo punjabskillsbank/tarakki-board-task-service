@@ -6,6 +6,7 @@ import com.tarakki.boardtask.dto.BoardMemberUpdateDTO;
 import com.tarakki.boardtask.exception.BoardMemberExistsException;
 import com.tarakki.boardtask.exception.BoardMemberNotFoundException;
 import com.tarakki.boardtask.exception.BoardNotFoundException;
+import com.tarakki.boardtask.exception.LastBoardAdminException;
 import com.tarakki.boardtask.exception.OrgMemberNotFoundException;
 import com.tarakki.boardtask.exception.OrgServiceUnavailableException;
 import com.tarakki.boardtask.service.BoardMemberService;
@@ -26,7 +27,11 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -340,5 +345,59 @@ public class BoardMemberControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.content().string(
                         "Board not found with id: " + invalidBoardId));
+    }
+
+    @Test
+    void shouldDeleteBoardMember() throws Exception {
+        doNothing().when(boardMemberService).deleteBoardMember(boardId, boardMemberId);
+
+        mockMvc.perform(delete(GET_BOARD_MEMBER_URL, boardId, boardMemberId)
+                        .with(jwt()))
+                .andExpect(status().isNoContent())
+                .andExpect(MockMvcResultMatchers.content().string(""));
+
+        verify(boardMemberService).deleteBoardMember(boardId, boardMemberId);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardIdDoesNotExistForDeleteBoardMember() throws Exception {
+        doThrow(new BoardNotFoundException(invalidBoardId))
+                .when(boardMemberService).deleteBoardMember(invalidBoardId, boardMemberId);
+
+        mockMvc.perform(delete(GET_BOARD_MEMBER_URL, invalidBoardId, boardMemberId)
+                        .with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Board not found with id: " + invalidBoardId));
+
+        verify(boardMemberService).deleteBoardMember(invalidBoardId, boardMemberId);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBoardMemberIdDoesNotExistForDeleteBoardMember() throws Exception {
+        doThrow(new BoardMemberNotFoundException(invalidBoardMemberId))
+                .when(boardMemberService).deleteBoardMember(boardId, invalidBoardMemberId);
+
+        mockMvc.perform(delete(GET_BOARD_MEMBER_URL, boardId, invalidBoardMemberId)
+                        .with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Board member not found with id: " + invalidBoardMemberId));
+
+        verify(boardMemberService).deleteBoardMember(boardId, invalidBoardMemberId);
+    }
+
+    @Test
+    void shouldReturnConflictWhenDeletingLastBoardAdmin() throws Exception {
+        doThrow(new LastBoardAdminException(boardId))
+                .when(boardMemberService).deleteBoardMember(boardId, boardMemberId);
+
+        mockMvc.perform(delete(GET_BOARD_MEMBER_URL, boardId, boardMemberId)
+                        .with(jwt()))
+                .andExpect(status().isConflict())
+                .andExpect(MockMvcResultMatchers.content().string(
+                        "Cannot remove the last admin of board with id: " + boardId));
+
+        verify(boardMemberService).deleteBoardMember(boardId, boardMemberId);
     }
 }

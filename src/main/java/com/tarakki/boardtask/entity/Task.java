@@ -31,7 +31,7 @@ public class Task {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "description", nullable = false, length = 500)
+    @Column(name = "description", length = 500)
     private String description;
 
     @Column(name = "position", nullable = false)

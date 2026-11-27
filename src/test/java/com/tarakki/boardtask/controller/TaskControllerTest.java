@@ -25,7 +25,6 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 
-import static com.tarakki.boardtask.util.BoardTestDataFactory.EXISTING_BOARD_ID;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -210,33 +209,24 @@ public class TaskControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenDescriptionIsMissing() throws Exception {
+    void shouldCreateTaskSuccessfullyWhenDescriptionIsNull() throws Exception {
 
         taskDto.setDescription(null);
+
+        when(taskService.createTaskByBoardId(any(), eq(boardId))).thenReturn(taskDto);
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskDto)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.description").doesNotExist());
     }
 
     @Test
     void shouldReturnBadRequestWhenDescriptionExceedsMaxLength() throws Exception {
 
         taskDto.setDescription(TaskTestDataFactory.DESCRIPTION_501_CHARS);
-
-        mockMvc.perform(post("/api/{boardId}/task", boardId)
-                        .with(jwt())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(taskDto)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void shouldReturnBadRequestWhenDescriptionIsBlank() throws Exception {
-
-        taskDto.setDescription(TaskTestDataFactory.BLANK_DESCRIPTION);
 
         mockMvc.perform(post("/api/{boardId}/task", boardId)
                         .with(jwt())

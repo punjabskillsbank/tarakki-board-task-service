@@ -29,7 +29,6 @@ public class TaskDTO {
     @NotBlank
     private String title;
 
-    @NotBlank
     @Size(max = 500)
     private String description;
 
